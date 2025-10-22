@@ -32,16 +32,45 @@ jobs:
       - name: Build
         run: .\gradlew.bat --no-daemon build
 
-      - name: Server smoke test (90s)
+      - name: Prep run directory (EULA + server.properties)
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath ".\gradlew.bat" -ArgumentList "--no-daemon runServer" -PassThru -WindowStyle Hidden
-          Start-Sleep -Seconds 90
-          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
-          if (Test-Path ".\run\logs\latest.log") {
-            $log = Get-Content ".\run\logs\latest.log" -Raw
-            if ($log -match "Done \(") { exit 0 } else { Get-Content ".\run\logs\latest.log" | Select-Object -Last 200; exit 1 }
-          } else { exit 1 }
+          New-Item -ItemType Directory -Force -Path ".\run" | Out-Null
+          # Accept EULA so server can start
+          Set-Content -NoNewline -Path ".\run\eula.txt" -Value "eula=true`r`n"
+          # Minimal server.properties (avoid NoSuchFileException)
+          @"
+#Minecraft server properties
+  motd=SentinelCore CI Smoke
+  server-port=25565
+  max-players=1
+  enable-command-block=false
+  online-mode=false
+  difficulty=easy
+  gamemode=survival
+  "@ | Set-Content -Path ".\run\server.properties" -NoNewline
+
+- name: Server smoke test (90s)
+  shell: pwsh
+  run: |
+    $p = Start-Process -FilePath ".\gradlew.bat" -ArgumentList "--no-daemon runServer" -PassThru -WindowStyle Hidden
+    Start-Sleep -Seconds 90
+    if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+    if (Test-Path ".\run\logs\latest.log") {
+      $log = Get-Content ".\run\logs\latest.log" -Raw
+      if ($log -match "Done \(") {
+        Write-Host "✅ Server reached 'Done'."
+        exit 0
+      } else {
+        Write-Host "❌ Server didn’t reach 'Done' within 90s. Tail follows:"
+        Get-Content ".\run\logs\latest.log" | Select-Object -Last 200
+        exit 1
+      }
+    } else {
+      Write-Host "❌ No server log found at .\run\logs\latest.log."
+      exit 1
+    }
+
 
       - name: Upload build artifacts
         if: success()
