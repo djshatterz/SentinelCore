@@ -10,6 +10,9 @@ import java.util.function.Consumer;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.BufferedReader;
+import java.io.OutputStream;
+import java.util.Locale;
 
 public final class ConfigManager {
   private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/Config");
@@ -61,54 +64,65 @@ public final class ConfigManager {
     return Files.exists(yamlPath()) ? yamlPath() : jsonPath();
   }
 
-  public static CoreConfig load() throws IOException {
-    Path file = fileInUse();
-    if (file.toString().endsWith(".json")) {
-      return JSON.readValue(Files.newBufferedReader(file), CoreConfig.class);
-    } else {
-      return YAML.readValue(Files.newBufferedReader(file), CoreConfig.class);
-    }
-  }
+    public static CoreConfig load() throws IOException {
+        Path file = fileInUse();
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
 
-  public static void saveYAML(CoreConfig cfg) throws IOException {
-    YAML.writerWithDefaultPrettyPrinter().writeValue(yamlPath().toFile(), cfg);
-  }
+        try (BufferedReader r = Files.newBufferedReader(file)) {
+            if (name.endsWith(".json")) {
+                return JSON.readValue(r, CoreConfig.class);
+            } else {
+                return YAML.readValue(r, CoreConfig.class);
+            }
+        }
+    }
+
+    public static void saveYAML(CoreConfig cfg) throws IOException {
+        // Use try-with-resources so Qodana sees the stream is closed explicitly
+        try (OutputStream out = Files.newOutputStream(yamlPath())) {
+            YAML.writerWithDefaultPrettyPrinter().writeValue(out, cfg);
+        }
+    }
+
 
   // naive debounced watcher (single-threaded)
   private static void startWatcher(Consumer<CoreConfig> onReload) {
-    var executor =
-        Executors.newSingleThreadExecutor(
-            r -> {
-              Thread t = new Thread(r, "SentinelCore-ConfigWatcher");
-              t.setDaemon(true);
-              return t;
-            });
+      var executor = Executors.newSingleThreadExecutor(r -> {
+          Thread t = new Thread(r, "SentinelCore-ConfigWatcher");
+          t.setDaemon(true);
+          return t;
+      });
 
-    executor.submit(
-        () -> {
-            try (WatchService ws = FileSystems.getDefault().newWatchService()) {
-                configDir().register(ws,
-                        StandardWatchEventKinds.ENTRY_MODIFY,
-                        StandardWatchEventKinds.ENTRY_CREATE);
-                LOG.info("Watching {} for changes", configDir().toAbsolutePath());
+      executor.submit(() -> {
+          try (WatchService ws = FileSystems.getDefault().newWatchService()) {
+              configDir().register(ws,
+                      StandardWatchEventKinds.ENTRY_MODIFY,
+                      StandardWatchEventKinds.ENTRY_CREATE);
+              LOG.info("Watching {} for changes", configDir().toAbsolutePath());
 
-                while (!Thread.currentThread().isInterrupted()) {
-                    WatchKey key = ws.take();
-                    boolean relevant = false;
-                    for (WatchEvent<?> ev : key.pollEvents()) {
-                        Path p = (Path) ev.context();
-                        String n = p.getFileName().toString();
-                        if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) relevant = true;
-                    }
-                    key.reset();
-                    if (relevant) {
-                        TimeUnit.MILLISECONDS.sleep(250);
-                        reloadConfig(onReload);
-                    }
-                }
-            } catch (Exception e) {
-            LOG.error("Config watcher stopped", e);
+              while (!Thread.currentThread().isInterrupted()) {
+                  WatchKey key = ws.take();
+                  boolean relevant = false;
+                  for (WatchEvent<?> ev : key.pollEvents()) {
+                      Path p = (Path) ev.context();
+                      String n = p.getFileName().toString();
+                      if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) relevant = true;
+                  }
+                  key.reset();
+                  if (relevant) {
+                      TimeUnit.MILLISECONDS.sleep(250);
+                      try {
+                          CoreConfig newCfg = load();
+                          CURRENT = newCfg;
+                          LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
+                          if (onReload != null) onReload.accept(newCfg);
+                      } catch (Exception ex) {
+                          LOG.error("Failed to reload config", ex);
+                      }
+                  }
+              }
+          } catch (Exception e) {
+              LOG.error("Config watcher stopped", e);
           }
-        });
+      });
   }
-}
