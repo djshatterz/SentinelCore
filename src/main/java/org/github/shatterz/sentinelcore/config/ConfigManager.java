@@ -16,6 +16,7 @@ import java.util.Locale;
 
 
 public final class ConfigManager {
+    private static volatile Thread WATCHER_THREAD;
     private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/Config");
     private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory());
     private static final ObjectMapper JSON = new ObjectMapper();
@@ -87,18 +88,14 @@ public final class ConfigManager {
 
     // naive debounced watcher (single-threaded)
     private static void startWatcher(Consumer<CoreConfig> onReload) {
-        var executor = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "SentinelCore-ConfigWatcher");
-            t.setDaemon(true);
-            return t;
-        });
+        // If already running, don't start twice
+        if (WATCHER_THREAD != null && WATCHER_THREAD.isAlive()) return;
 
-        executor.submit(() -> {
+        WATCHER_THREAD = new Thread(() -> {
             try (WatchService ws = FileSystems.getDefault().newWatchService()) {
                 configDir().register(ws,
                         StandardWatchEventKinds.ENTRY_MODIFY,
                         StandardWatchEventKinds.ENTRY_CREATE);
-
                 LOG.info("Watching {} for changes", configDir().toAbsolutePath());
 
                 while (!Thread.currentThread().isInterrupted()) {
@@ -110,7 +107,9 @@ public final class ConfigManager {
                         if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) relevant = true;
                     }
                     key.reset();
+
                     if (relevant) {
+                        // debounce a bit
                         TimeUnit.MILLISECONDS.sleep(250);
                         try {
                             CoreConfig newCfg = load();
@@ -122,12 +121,25 @@ public final class ConfigManager {
                         }
                     }
                 }
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt(); // graceful exit
             } catch (Exception e) {
                 LOG.error("Config watcher stopped", e);
             }
-        });
+        }, "SentinelCore-ConfigWatcher");
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> executor.shutdownNow(),
-                "SentinelCore-ConfigWatcher-Shutdown"));
+        WATCHER_THREAD.setDaemon(true);
+        WATCHER_THREAD.start();
+
+        // Ensure we stop on JVM shutdown (no lingering threads)
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (WATCHER_THREAD != null) {
+                WATCHER_THREAD.interrupt();
+                try {
+                    WATCHER_THREAD.join(1000);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }, "SentinelCore-ConfigWatcher-Shutdown"));
     }
 }
