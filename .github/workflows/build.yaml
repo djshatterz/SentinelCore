@@ -32,7 +32,6 @@ jobs:
       - name: Build
         run: .\gradlew.bat --no-daemon build
 
-      # Short server boot to catch obvious misconfig; we don't keep it running.
       - name: Server smoke test (90s)
         shell: pwsh
         run: |
@@ -41,19 +40,8 @@ jobs:
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
           if (Test-Path ".\run\logs\latest.log") {
             $log = Get-Content ".\run\logs\latest.log" -Raw
-            if ($log -match "Done \(") {
-              Write-Host "✅ Server reached 'Done' state."
-              exit 0
-            } else {
-              Write-Host "❌ Server didn’t reach 'Done' within 90s."
-              Write-Host "------ last 200 lines ------"
-              Get-Content ".\run\logs\latest.log" | Select-Object -Last 200
-              exit 1
-            }
-          } else {
-            Write-Host "❌ No server log found at .\run\logs\latest.log."
-            exit 1
-          }
+            if ($log -match "Done \(") { exit 0 } else { Get-Content ".\run\logs\latest.log" | Select-Object -Last 200; exit 1 }
+          } else { exit 1 }
 
       - name: Upload build artifacts
         if: success()
