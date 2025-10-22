@@ -86,36 +86,27 @@ public final class ConfigManager {
 
     executor.submit(
         () -> {
-          try (WatchService ws = FileSystems.getDefault().newWatchService()) {
-            configDir()
-                .register(
-                    ws, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE);
-            LOG.info("Watching {} for changes", configDir().toAbsolutePath());
-            while (true) {
-              WatchKey key = ws.take();
-              boolean relevant = false;
-              for (WatchEvent<?> ev : key.pollEvents()) {
-                Path p = (Path) ev.context();
-                String n = p.getFileName().toString();
-                if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) {
-                  relevant = true;
+            try (WatchService ws = FileSystems.getDefault().newWatchService()) {
+                configDir().register(ws,
+                        StandardWatchEventKinds.ENTRY_MODIFY,
+                        StandardWatchEventKinds.ENTRY_CREATE);
+                LOG.info("Watching {} for changes", configDir().toAbsolutePath());
+
+                while (!Thread.currentThread().isInterrupted()) {
+                    WatchKey key = ws.take();
+                    boolean relevant = false;
+                    for (WatchEvent<?> ev : key.pollEvents()) {
+                        Path p = (Path) ev.context();
+                        String n = p.getFileName().toString();
+                        if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) relevant = true;
+                    }
+                    key.reset();
+                    if (relevant) {
+                        TimeUnit.MILLISECONDS.sleep(250);
+                        reloadConfig(onReload);
+                    }
                 }
-              }
-              key.reset();
-              if (relevant) {
-                // debounce
-                TimeUnit.MILLISECONDS.sleep(250);
-                try {
-                  CoreConfig newCfg = load();
-                  CURRENT = newCfg;
-                  LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
-                  if (onReload != null) onReload.accept(newCfg);
-                } catch (Exception ex) {
-                  LOG.error("Failed to reload config", ex);
-                }
-              }
-            }
-          } catch (Exception e) {
+            } catch (Exception e) {
             LOG.error("Config watcher stopped", e);
           }
         });
