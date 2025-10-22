@@ -1,6 +1,9 @@
 package org.github.shatterz.sentinelcore;
 
 import net.fabricmc.api.ModInitializer;
+import org.github.shatterz.sentinelcore.command.CoreCommands;
+import org.github.shatterz.sentinelcore.core.ConfigMgr;
+import org.github.shatterz.sentinelcore.core.PermissionMgr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +13,11 @@ public class SentinelCore implements ModInitializer {
 
   @Override
   public void onInitialize() {
-    LOGGER.info("[SentinelCore] Initializing base systems...");
-    // Phase 1+: PermissionMgr.init(), Config.load(), etc.
+    LOGGER.info("[SentinelCore] Initializing base systems (Phase 1 stubs)...");
+    ConfigMgr.init();
+    PermissionMgr.init();
+    CoreCommands.register();
+    org.github.shatterz.sentinelcore.command.PermTestCommand.register();
+    LOGGER.info("[SentinelCore] Ready.");
   }
 }

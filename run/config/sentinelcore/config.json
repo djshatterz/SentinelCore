@@ -1,0 +1,9 @@
+{
+  "debug": false,
+  "features": {
+    "spawnelytra": true,
+    "spawnprotection": true,
+    "prefixes": true,
+    "permissions": true
+  }
+}
