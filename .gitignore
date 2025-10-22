@@ -1,42 +1,14 @@
 # Gradle
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
-
-# IntelliJ IDEA / Android Studio
+out/
 .idea/
 *.iml
-out/
-
-# Eclipse
+*.ipr
+*.iws
 .project
 .classpath
 .settings/
-
-# VS Code
+bin/
 .vscode/
-
-# Logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Run configs and local environment
-run/
-local.properties
-.env
-
-# Java
-hs_err_pid*
-replay_pid*
-
-# Generated sources/jars
-*.jar
-*.war
-*.ear
-
-# Fabric Loom caches (safe to regenerate)
-.remapped/
-.remappedSrc/
+logs/
