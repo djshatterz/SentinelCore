@@ -5,9 +5,6 @@
   "name": "SentinelCore",
   "description": "Server-side core for spawn systems, staff tools, auditing, and QoL.",
   "authors": ["djshatterz"],
-  "contact": {
-    "sources": "https://github.com/djshatterz/SentinelCore"
-  },
   "license": "MIT",
   "environment": "server",
   "entrypoints": {
@@ -16,8 +13,8 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=${loader_version}",
-    "minecraft": ">=${minecraft_version}",
+    "fabricloader": ">=0.17.3",
+    "minecraft": "1.21.10",
     "java": ">=21"
   }
 }
