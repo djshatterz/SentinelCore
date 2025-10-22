@@ -15,54 +15,54 @@ import java.io.OutputStream;
 import java.util.Locale;
 
 public final class ConfigManager {
-  private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/Config");
-  private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory());
-  private static final ObjectMapper JSON = new ObjectMapper();
+    private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/Config");
+    private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory());
+    private static final ObjectMapper JSON = new ObjectMapper();
 
-  private static final String DIR_NAME = "sentinelcore";
-  private static final String YAML_NAME = "config.yaml";
-  private static final String JSON_NAME = "config.json";
+    private static final String DIR_NAME = "sentinelcore";
+    private static final String YAML_NAME = "config.yaml";
+    private static final String JSON_NAME = "config.json";
 
-  private static Path configDir() {
-    return FabricLoader.getInstance().getConfigDir().resolve(DIR_NAME);
-  }
-
-  private static Path yamlPath() {
-    return configDir().resolve(YAML_NAME);
-  }
-
-  private static Path jsonPath() {
-    return configDir().resolve(JSON_NAME);
-  }
-
-  private static volatile CoreConfig CURRENT = CoreConfig.defaults();
-
-  public static CoreConfig get() {
-    return CURRENT;
-  }
-
-  public static void init(Consumer<CoreConfig> onReload) {
-    try {
-      Files.createDirectories(configDir());
-      Path yml = yamlPath();
-      Path json = jsonPath();
-      if (!Files.exists(yml) && !Files.exists(json)) {
-        // write defaults to YAML
-        saveYAML(CoreConfig.defaults());
-        LOG.info("Created default config at {}", yml.toAbsolutePath());
-      }
-      CURRENT = load();
-      LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
-      startWatcher(onReload);
-    } catch (IOException e) {
-      LOG.error("Failed to init config, using defaults", e);
-      CURRENT = CoreConfig.defaults();
+    private static Path configDir() {
+        return FabricLoader.getInstance().getConfigDir().resolve(DIR_NAME);
     }
-  }
 
-  public static Path fileInUse() {
-    return Files.exists(yamlPath()) ? yamlPath() : jsonPath();
-  }
+    private static Path yamlPath() {
+        return configDir().resolve(YAML_NAME);
+    }
+
+    private static Path jsonPath() {
+        return configDir().resolve(JSON_NAME);
+    }
+
+    private static volatile CoreConfig CURRENT = CoreConfig.defaults();
+
+    public static CoreConfig get() {
+        return CURRENT;
+    }
+
+    public static void init(Consumer<CoreConfig> onReload) {
+        try {
+            Files.createDirectories(configDir());
+            Path yml = yamlPath();
+            Path json = jsonPath();
+            if (!Files.exists(yml) && !Files.exists(json)) {
+                // write defaults to YAML
+                saveYAML(CoreConfig.defaults());
+                LOG.info("Created default config at {}", yml.toAbsolutePath());
+            }
+            CURRENT = load();
+            LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
+            startWatcher(onReload);
+        } catch (IOException e) {
+            LOG.error("Failed to init config, using defaults", e);
+            CURRENT = CoreConfig.defaults();
+        }
+    }
+
+    public static Path fileInUse() {
+        return Files.exists(yamlPath()) ? yamlPath() : jsonPath();
+    }
 
     public static CoreConfig load() throws IOException {
         Path file = fileInUse();
@@ -85,44 +85,48 @@ public final class ConfigManager {
     }
 
 
-  // naive debounced watcher (single-threaded)
-  private static void startWatcher(Consumer<CoreConfig> onReload) {
-      var executor = Executors.newSingleThreadExecutor(r -> {
-          Thread t = new Thread(r, "SentinelCore-ConfigWatcher");
-          t.setDaemon(true);
-          return t;
-      });
+    // naive debounced watcher (single-threaded)
+    private static void startWatcher(Consumer<CoreConfig> onReload) {
+        var executor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "SentinelCore-ConfigWatcher");
+            t.setDaemon(true);
+            return t;
+        });
 
-      executor.submit(() -> {
-          try (WatchService ws = FileSystems.getDefault().newWatchService()) {
-              configDir().register(ws,
-                      StandardWatchEventKinds.ENTRY_MODIFY,
-                      StandardWatchEventKinds.ENTRY_CREATE);
-              LOG.info("Watching {} for changes", configDir().toAbsolutePath());
+        executor.submit(() -> {
+            try (WatchService ws = FileSystems.getDefault().newWatchService()) {
+                configDir().register(ws,
+                        StandardWatchEventKinds.ENTRY_MODIFY,
+                        StandardWatchEventKinds.ENTRY_CREATE);
+                LOG.info("Watching {} for changes", configDir().toAbsolutePath());
 
-              while (!Thread.currentThread().isInterrupted()) {
-                  WatchKey key = ws.take();
-                  boolean relevant = false;
-                  for (WatchEvent<?> ev : key.pollEvents()) {
-                      Path p = (Path) ev.context();
-                      String n = p.getFileName().toString();
-                      if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) relevant = true;
-                  }
-                  key.reset();
-                  if (relevant) {
-                      TimeUnit.MILLISECONDS.sleep(250);
-                      try {
-                          CoreConfig newCfg = load();
-                          CURRENT = newCfg;
-                          LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
-                          if (onReload != null) onReload.accept(newCfg);
-                      } catch (Exception ex) {
-                          LOG.error("Failed to reload config", ex);
-                      }
-                  }
-              }
-          } catch (Exception e) {
-              LOG.error("Config watcher stopped", e);
-          }
-      });
-  }
+                while (!Thread.currentThread().isInterrupted()) {
+                    WatchKey key = ws.take();
+                    boolean relevant = false;
+                    for (WatchEvent<?> ev : key.pollEvents()) {
+                        Path p = (Path) ev.context();
+                        String n = p.getFileName().toString();
+                        if (YAML_NAME.equals(n) || JSON_NAME.equals(n)) relevant = true;
+                    }
+                    key.reset();
+                    if (relevant) {
+                        TimeUnit.MILLISECONDS.sleep(250);
+                        try {
+                            CoreConfig newCfg = load();
+                            CURRENT = newCfg;
+                            LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
+                            if (onReload != null) onReload.accept(newCfg);
+                        } catch (Exception ex) {
+                            LOG.error("Failed to reload config", ex);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("Config watcher stopped", e);
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            executor.shutdownNow();
+        }, "SentinelCore-ConfigWatcher-Shutdown"));
+    }
+}
