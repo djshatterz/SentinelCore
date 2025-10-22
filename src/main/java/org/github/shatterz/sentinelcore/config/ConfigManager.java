@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.OutputStream;
 import java.util.Locale;
 
+
 public final class ConfigManager {
     private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/Config");
     private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory());
@@ -78,7 +79,6 @@ public final class ConfigManager {
     }
 
     public static void saveYAML(CoreConfig cfg) throws IOException {
-        // Use try-with-resources so Qodana sees the stream is closed explicitly
         try (OutputStream out = Files.newOutputStream(yamlPath())) {
             YAML.writerWithDefaultPrettyPrinter().writeValue(out, cfg);
         }
@@ -98,6 +98,7 @@ public final class ConfigManager {
                 configDir().register(ws,
                         StandardWatchEventKinds.ENTRY_MODIFY,
                         StandardWatchEventKinds.ENTRY_CREATE);
+
                 LOG.info("Watching {} for changes", configDir().toAbsolutePath());
 
                 while (!Thread.currentThread().isInterrupted()) {
@@ -125,8 +126,8 @@ public final class ConfigManager {
                 LOG.error("Config watcher stopped", e);
             }
         });
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            executor.shutdownNow();
-        }, "SentinelCore-ConfigWatcher-Shutdown"));
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> executor.shutdownNow(),
+                "SentinelCore-ConfigWatcher-Shutdown"));
     }
 }
