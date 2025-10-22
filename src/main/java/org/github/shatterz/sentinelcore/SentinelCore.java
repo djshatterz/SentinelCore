@@ -1,16 +1,30 @@
 package org.github.shatterz.sentinelcore;
 
 import net.fabricmc.api.ModInitializer;
+import org.github.shatterz.sentinelcore.config.ConfigManager;
+import org.github.shatterz.sentinelcore.flags.FeatureFlagRegistry;
+import org.github.shatterz.sentinelcore.log.SentinelLogger;
+import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class SentinelCore implements ModInitializer {
-  public static final String MOD_ID = "sentinelcore";
-  public static final Logger LOGGER = LoggerFactory.getLogger("SentinelCore");
+public final class SentinelCore implements ModInitializer {
+    public static final String MOD_ID = "sentinelcore";
 
-  @Override
-  public void onInitialize() {
-    LOGGER.info("[SentinelCore] Initializing base systems...");
-    // Phase 1+: PermissionMgr.init(), Config.load(), etc.
-  }
+    @Override
+    public void onInitialize() {
+        Logger log = SentinelLogger.root();
+        log.info("[SentinelCore] Initializing base systems...");
+
+        // config + flags (hot-reload is inside ConfigManager; FeatureFlagRegistry wires a callback)
+        FeatureFlagRegistry.wireReload();
+
+        // category demo logs (will respect on/off later if you add level filtering)
+        SentinelLogger.cat(SentinelCategories.AUDIT).info("Audit logging ready.");
+        SentinelLogger.cat(SentinelCategories.PERM).info("Permission logging ready.");
+        SentinelLogger.cat(SentinelCategories.MOVE).info("Movement logging ready.");
+        SentinelLogger.cat(SentinelCategories.MODMODE).info("ModMode logging ready.");
+        SentinelLogger.cat(SentinelCategories.SPAWN).info("Spawn logging ready.");
+
+        log.info("[SentinelCore] Initialization complete.");
+    }
 }
