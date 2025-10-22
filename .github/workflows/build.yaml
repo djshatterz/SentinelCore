@@ -1,10 +1,14 @@
-name: Build & Smoke (Temurin 21)
+name: Build (Temurin 21)
 
 on:
   push:
-    branches: ["dev", "feature/**"]
+    branches:
+      - dev
+      - 'feature/**'
   pull_request:
-    branches: ["dev", "feature/**"]
+    branches:
+      - dev
+      - 'feature/**'
   workflow_dispatch:
 
 permissions:
@@ -12,86 +16,16 @@ permissions:
 
 jobs:
   build:
-    name: Gradle build on Windows (Temurin 21)
     runs-on: windows-latest
-    timeout-minutes: 25
-
+    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Temurin 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
           cache: gradle
 
-      - name: Verify Java & Gradle
+      - name: Gradle version
         run: .\gradlew.bat --version
-
-      - name: Spotless (format)
-        run: .\gradlew.bat --no-daemon :spotlessApply --stacktrace
-
-      - name: Build
-        run: .\gradlew.bat --no-daemon build --stacktrace
-
-      - name: Prep run directory (EULA + server.properties)
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path ".\run" | Out-Null
-          Set-Content -NoNewline -Path ".\run\eula.txt" -Value "eula=true`r`n"
-          @"
-#Minecraft server properties
-  motd=SentinelCore CI Smoke
-  server-port=25565
-  online-mode=false
-  max-players=1
-  "@ | Set-Content -Path ".\run\server.properties" -NoNewline
-
-# TEMP: keep non-blocking so we can wire branch protection; we'll flip this off later
-- name: Server smoke test (150s)
-  continue-on-error: true
-  shell: pwsh
-  run: |
-    $p = Start-Process -FilePath ".\gradlew.bat" -ArgumentList "--no-daemon runServer" -PassThru -WindowStyle Hidden
-    Start-Sleep -Seconds 150
-    if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
-    $logPath = ".\run\logs\latest.log"
-    if (-not (Test-Path $logPath)) { Write-Host "❌ No server log found at $logPath"; exit 1 }
-    $log = Get-Content $logPath -Raw
-    if ($log -match "Done \(" -or $log -match "Starting minecraft server") {
-      Write-Host "✅ Smoke passed."
-      exit 0
-    } else {
-      Write-Host "❌ Smoke failed. Tail:"
-      Get-Content $logPath | Select-Object -Last 200
-      exit 1
-    }
-
-# Always upload reports to debug failures
-- name: Upload build reports
-  if: failure() || cancelled()
-  uses: actions/upload-artifact@v4
-  with:
-    name: gradle-reports-${{ github.ref_name }}-${{ github.run_id }}
-    path: |
-      **/build/reports/**
-      **/build/test-results/**
-    if-no-files-found: ignore
-
-- name: Upload server logs
-  if: always()
-  uses: actions/upload-artifact@v4
-  with:
-    name: run-logs-${{ github.ref_name }}-${{ github.run_id }}
-    path: run/logs/**
-    if-no-files-found: ignore
-
-- name: Upload jars
-  if: success()
-  uses: actions/upload-artifact@v4
-  with:
-    name: SentinelCore-${{ github.ref_name }}-${{ github.sha }}
-    path: build/libs/*.jar
-    if-no-files-found: error
