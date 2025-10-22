@@ -1,0 +1,77 @@
+[
+  {
+    "title": "Phase 0: Fabric Scaffolding",
+    "labels": ["phase:0", "setup"],
+    "body": "### Summary\nInitialize Fabric Loom project for Minecraft 1.21.10 (server-side only).\n\n### Checklist\n- [ ] Create Fabric Loom Gradle project\n- [ ] Set modid `sentinelcore`\n- [ ] Implement central logger with categories (audit, perm, move, modmode, spawn)\n- [ ] Implement YAML/JSON config loader with hot-reload\n- [ ] Add feature flag registry\n\n### Dependencies\nNone"
+  },
+  {
+    "title": "Phase 1: PermissionMgr & RoleContext",
+    "labels": ["phase:1", "core"],
+    "body": "### Summary\nImplement permission backbone (SentinelCore groups + LuckPerms bridge).\n\n### Checklist\n- [ ] PermissionMgr wrapper (LuckPerms + fallback)\n- [ ] RoleContext system (group, op, modmode:true)\n- [ ] Group hierarchy: default→moderator→admin→developer→op\n- [ ] LuckPerms bridge/mirror modes\n- [ ] Event listeners for group/permission change\n\n### Depends on\nPhase 0"
+  },
+  {
+    "title": "Phase 2: AuditManager + Command Audit",
+    "labels": ["phase:2", "core", "logging"],
+    "body": "### Summary\nImplement structured auditing for staff commands and actions.\n\n### Checklist\n- [ ] AuditManager (file + Ledger sinks)\n- [ ] JSONL rotation + retention\n- [ ] Command Audit interceptor for moderator+\n- [ ] Redaction rules + exclusions\n- [ ] `/sclogs tail|find|export|toggle` admin commands\n\n### Depends on\nPhase 1"
+  },
+  {
+    "title": "Phase 3: NameFormatter Service",
+    "labels": ["phase:3", "cosmetic"],
+    "body": "### Summary\nCombine Community + Team prefixes with color overrides for mod mode.\n\n### Checklist\n- [ ] NameFormatter combines [Community] [Team] PlayerName\n- [ ] RGB and named color support\n- [ ] Hooks for chat + tablist display names\n- [ ] Mod-mode color override (blue/red)\n\n### Depends on\nPhase 1"
+  },
+  {
+    "title": "Phase 4: Hidden Commands System",
+    "labels": ["phase:4", "core", "ux"],
+    "body": "### Summary\nHide inaccessible commands and subcommands from tab-completion and /help.\n\n### Checklist\n- [ ] Brigadier pruning based on PermissionMgr + RoleContext\n- [ ] Mod-mode context shows/hides tools instantly\n- [ ] alwaysShow / alwaysHide overrides\n- [ ] Alias hiding and subcommand pruning\n\n### Depends on\nPhase 1, Phase 8"
+  },
+  {
+    "title": "Phase 5: MovementManager + AdvancementSuppressor",
+    "labels": ["phase:5", "core", "movement"],
+    "body": "### Summary\nCentralize teleport and movement utilities used by Elytra, Warps, and Teleport Areas.\n\n### Checklist\n- [ ] MovementManager safe-TP (hazard checks, center on block)\n- [ ] Cancel gliding, remove SpawnElytra, dismount, reset velocity\n- [ ] Teleport audit event emission\n- [ ] AdvancementSuppressor blocks 'Sky’s the Limit'\n\n### Depends on\nPhase 2"
+  },
+  {
+    "title": "Phase 6: SpawnProtection",
+    "labels": ["phase:6", "feature"],
+    "body": "### Summary\nCreate cylindrical safe zone preventing block breaking/placing and damage near spawn.\n\n### Checklist\n- [ ] Configurable radius and bottomY\n- [ ] Allowlist: crafting/chests/enchant/shulker\n- [ ] Harden: explosions, pistons, fluids, enderman, mobs\n- [ ] Creative and admin bypass nodes\n- [ ] `/spawnprot info|enable|disable|setcenter|setradius|setbottomy`\n\n### Depends on\nPhase 5"
+  },
+  {
+    "title": "Phase 7: SpawnElytra System",
+    "labels": ["phase:7", "feature", "movement"],
+    "body": "### Summary\nImplement single-use Elytra for spawn gliding.\n\n### Checklist\n- [ ] Grant on first join/respawn at world spawn\n- [ ] Equip via Shift hold detection (0.5s)\n- [ ] Prevent manual removal, drop, swap\n- [ ] Boost system (Shift-based)\n- [ ] Removal below threshold or on ground/water\n- [ ] Remove on disconnect/shutdown\n- [ ] Block 'Sky’s the Limit' advancement\n\n### Depends on\nPhase 5"
+  },
+  {
+    "title": "Phase 8: Moderator Mode & Tools",
+    "labels": ["phase:8", "feature", "staff"],
+    "body": "### Summary\nCreate staff-only moderation environment with toggles and snapshot/restore.\n\n### Checklist\n- [ ] `/mod`, `/m`, `/tst` toggle system\n- [ ] Snapshot/restore player state\n- [ ] Protections: invulnerable, no hunger/air loss\n- [ ] Prefix recolor (blue/red)\n- [ ] Fly, pickup, instantbreak toggles\n- [ ] Vanish with fake leave/join\n- [ ] Mute/unmute/chat moderation\n- [ ] Teleport, give (blacklist for mods), kick, ban, whitelist\n- [ ] Ledger + InvView integration\n- [ ] Advancement suppression in mod mode\n\n### Depends on\nPhase 1, Phase 2, Phase 3"
+  },
+  {
+    "title": "Phase 9: Warps (Mod-Mode Only)",
+    "labels": ["phase:9", "feature", "staff"],
+    "body": "### Summary\nImplement staff-only warp system for quick navigation during mod mode.\n\n### Checklist\n- [ ] `/warp list|info|add|remove|<name>`\n- [ ] mod use/list; admin add/remove\n- [ ] Safe-TP via MovementManager\n- [ ] Separate `modwarps.json` storage\n- [ ] Audited with Ledger and Command Audit\n\n### Depends on\nPhase 8, Phase 5"
+  },
+  {
+    "title": "Phase 10: Teleport Areas (Public)",
+    "labels": ["phase:10", "feature", "movement"],
+    "body": "### Summary\nImplement Shift-hold teleport zones usable by all players.\n\n### Checklist\n- [ ] Area model (sphere/cylinder)\n- [ ] Trigger: Shift hold 0.5s, cancel on move\n- [ ] Safe-TP via MovementManager\n- [ ] Remove Elytra on teleport\n- [ ] Admin commands to create/edit/remove areas\n- [ ] Use open to all; management admin-only\n\n### Depends on\nPhase 5"
+  },
+  {
+    "title": "Phase 11: Community Prefixes",
+    "labels": ["phase:11", "cosmetic"],
+    "body": "### Summary\nImplement player-selectable community tags with color support.\n\n### Checklist\n- [ ] `/community list|select|none|info`\n- [ ] RGB + named color support\n- [ ] LuckPerms gating per-prefix\n- [ ] Persistence + silent UX\n\n### Depends on\nPhase 3"
+  },
+  {
+    "title": "Phase 12: Team Prefix Integration",
+    "labels": ["phase:12", "cosmetic"],
+    "body": "### Summary\nAuto [Team] prefix for staff; integrate with community and mod-mode recolor.\n\n### Checklist\n- [ ] Auto-assign [Team] to moderator/admin\n- [ ] Insert after community prefix\n- [ ] Recolor in mod mode\n\n### Depends on\nPhase 11"
+  },
+  {
+    "title": "Phase 13: Hidden Commands Final Pass",
+    "labels": ["phase:13", "ux", "cleanup"],
+    "body": "### Summary\nFinalize dynamic command visibility after all features are registered.\n\n### Checklist\n- [ ] Wire to mod-mode events, LP events, op/deop\n- [ ] Verify alwaysShow/alwaysHide behavior\n- [ ] Regression tests for visibility tree\n\n### Depends on\nAll previous phases"
+  },
+  {
+    "title": "Regression & Integration Testing",
+    "labels": ["phase:final", "qa"],
+    "body": "### Summary\nRun cross-feature and performance tests; finalize docs and configs.\n\n### Checklist\n- [ ] Shift conflict (Elytra vs Teleport Areas)\n- [ ] Teleport preserves vanish/tablist\n- [ ] Elytra removal consistency\n- [ ] SpawnProtection bypass verified\n- [ ] Audit coverage verified\n- [ ] LP bridge/mirror sync\n- [ ] Performance + rate-limit checks\n- [ ] Crash safety (modmode snapshot)\n- [ ] Docs + example config\n\n### Depends on\nAll previous phases"
+  }
+]
