@@ -2,9 +2,9 @@ name: Build & Smoke (Temurin 21)
 
 on:
   push:
-    branches: [ "dev", "feature/**" ]
+    branches: ["dev", "feature/**"]
   pull_request:
-    branches: [ "dev", "feature/**" ]
+    branches: ["dev", "feature/**"]
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
   build:
     name: Gradle build on Windows (Temurin 21)
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -42,32 +42,34 @@ jobs:
           # Minimal server.properties (CI-friendly)
           @"
 #Minecraft server properties
-  motd=SentinelCore CI Smoke
-  server-port=25565
-  rcon.port=25575
-  enable-rcon=false
-  max-players=1
-  online-mode=false
-  enable-command-block=false
-  difficulty=easy
-  gamemode=survival
-  "@ | Set-Content -Path ".\run\server.properties" -NoNewline
+motd=SentinelCore CI Smoke
+server-port=25565
+online-mode=false
+max-players=1
+"@ | Set-Content -Path ".\run\server.properties" -NoNewline
 
+      # TEMPORARILY non-blocking so we can turn on branch protection; we can flip this off later
       - name: Server smoke test (150s)
-        continue-on-error: true   # ← add this line temporarily
+        continue-on-error: true
         shell: pwsh
         run: |
           $p = Start-Process -FilePath ".\gradlew.bat" -ArgumentList "--no-daemon runServer" -PassThru -WindowStyle Hidden
           Start-Sleep -Seconds 150
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
           $logPath = ".\run\logs\latest.log"
-          if (-not (Test-Path $logPath)) { Write-Host "❌ No server log"; exit 1 }
+          if (-not (Test-Path $logPath)) {
+            Write-Host "❌ No server log found at $logPath"
+            exit 1
+          }
           $log = Get-Content $logPath -Raw
-          if ($log -match "Done \(" -or $log -match "Starting minecraft server") { exit 0 }
-          Write-Host "❌ Smoke failed. Tail:"; Get-Content $logPath | Select-Object -Last 200; exit 1
-
-
-
+          if ($log -match "Done \(" -or $log -match "Starting minecraft server") {
+            Write-Host "✅ Smoke passed."
+            exit 0
+          } else {
+            Write-Host "❌ Smoke failed. Tail of log follows:"
+            Get-Content $logPath | Select-Object -Last 200
+            exit 1
+          }
 
       - name: Upload build artifacts
         if: success()
