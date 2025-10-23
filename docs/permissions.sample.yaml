@@ -1,0 +1,18 @@
+permissions:
+  backend: memory
+  defaultRole: default
+  roles:
+    default:
+      allow:
+        - "sentinelcore.info"
+      deny: []
+      inherits: []
+    mod:
+      allow:
+        - "sentinelcore.*"
+      deny:
+        - "sentinelcore.admin.dangerous"
+      inherits:
+        - "default"
+  userRoles:
+    "00000000-0000-0000-0000-000000000000": "mod"   # example uuid
