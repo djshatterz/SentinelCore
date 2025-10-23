@@ -5,8 +5,8 @@ import org.github.shatterz.sentinelcore.log.SentinelLogger;
 import org.slf4j.Logger;
 
 /**
- * Event listener for LuckPerms events. Synchronizes LuckPerms data with SentinelCore's
- * RoleContext system.
+ * Event listener for LuckPerms events. Synchronizes LuckPerms data with SentinelCore's RoleContext
+ * system.
  *
  * <p>TODO: Implement actual LuckPerms event listeners once LP API is added to dependencies.
  *
