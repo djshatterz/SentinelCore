@@ -15,6 +15,9 @@ public class CoreConfig {
   /** Permission configuration (backend + roles). */
   public Permissions permissions = new Permissions();
 
+  /** Audit logging configuration. */
+  public Audit audit = new Audit();
+
   /** Default constructor populates nothing; use defaults() to create a prefilled config. */
   public CoreConfig() {}
 
@@ -24,6 +27,33 @@ public class CoreConfig {
     public boolean move = true;
     public boolean modmode = true;
     public boolean spawn = true;
+  }
+
+  /** Audit configuration schema. */
+  public static class Audit {
+    /** Master switch for audit logging. */
+    public boolean enabled = true;
+
+    /** Directory under the game dir logs folder where audit files are written. */
+    public String directory = "sentinelcore"; // resolves to <gameDir>/logs/sentinelcore
+
+    /** Rotation policy: "daily" or "size" (size in MB below). */
+    public String rotation = "daily";
+
+    /** Max file size in MB when rotation == size. */
+    public int maxFileSizeMb = 10;
+
+    /** Retention in days for old audit files. */
+    public int retentionDays = 7;
+
+    /** If true, only audit privileged/admin actions we emit. */
+    public boolean auditModerationOnly = true;
+
+    /** Commands to exclude from audit (by root literal, e.g. "login"). */
+    public java.util.Set<String> excludedCommands = new java.util.HashSet<>();
+
+    /** Redaction patterns to mask (simple substrings). */
+    public java.util.Set<String> redactSubstrings = new java.util.HashSet<>();
   }
 
   /** Permissions schema stored in YAML/JSON config. */
@@ -65,6 +95,7 @@ public class CoreConfig {
     Role admin = new Role();
     admin.allow.add("sentinelcore.admin.*");
     admin.allow.add("sentinelcore.warps.*");
+    admin.allow.add("sentinelcore.audit.*");
     admin.deny.add("sentinelcore.admin.dangerous");
     admin.inherits.add("moderator");
     p.roles.put("admin", admin);
