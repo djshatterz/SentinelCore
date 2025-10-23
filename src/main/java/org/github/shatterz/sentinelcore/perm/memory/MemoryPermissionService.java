@@ -48,6 +48,43 @@ public final class MemoryPermissionService implements PermissionService {
     return resolve(role, node, visited);
   }
 
+  @Override
+  public String getGroup(UUID subject) {
+    return userRoles.getOrDefault(subject, defaultRole);
+  }
+
+  @Override
+  public void setGroup(UUID subject, String group) {
+    if (group == null || !roles.containsKey(group)) {
+      userRoles.remove(subject);
+    } else {
+      userRoles.put(subject, group);
+    }
+  }
+
+  @Override
+  public List<String> getInheritedGroups(UUID subject) {
+    String primaryGroup = getGroup(subject);
+    List<String> inherited = new ArrayList<>();
+    Set<String> visited = new HashSet<>();
+    collectInherited(primaryGroup, inherited, visited);
+    return inherited;
+  }
+
+  @Override
+  public boolean groupExists(String group) {
+    return roles.containsKey(group);
+  }
+
+  private void collectInherited(String role, List<String> result, Set<String> visited) {
+    if (role == null || !roles.containsKey(role) || !visited.add(role)) return;
+    result.add(role);
+    RoleView r = roles.get(role);
+    for (String parent : r.inherits) {
+      collectInherited(parent, result, visited);
+    }
+  }
+
   private boolean resolve(String role, String node, Set<String> visited) {
     if (role == null || !roles.containsKey(role) || !visited.add(role)) return false;
     RoleView r = roles.get(role);
