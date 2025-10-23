@@ -54,6 +54,12 @@ public class CoreConfig {
 
     /** Redaction patterns to mask (simple substrings). */
     public java.util.Set<String> redactSubstrings = new java.util.HashSet<>();
+
+    /** Enable secondary "ledger" sink (e.g., logger or external). */
+    public boolean ledgerEnabled = false;
+
+    /** Ledger sink mode; currently supported: "logger". */
+    public String ledgerMode = "logger";
   }
 
   /** Permissions schema stored in YAML/JSON config. */

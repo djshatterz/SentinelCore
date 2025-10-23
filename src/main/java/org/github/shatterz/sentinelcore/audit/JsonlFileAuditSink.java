@@ -17,11 +17,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.stream.Stream;
 import net.fabricmc.loader.api.FabricLoader;
+import org.github.shatterz.sentinelcore.config.CoreConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Simple JSONL sink with daily rotation and retention cleanup. */
-final class JsonlFileAuditSink {
+final class JsonlFileAuditSink implements AuditSink {
   private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/AuditSink");
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -40,13 +41,16 @@ final class JsonlFileAuditSink {
     this.retentionDays = retentionDays;
   }
 
-  void reconfigure(Path baseDir, String rotation, int retentionDays) {
-    this.baseDir = baseDir;
-    this.rotation = rotation;
-    this.retentionDays = retentionDays;
+  @Override
+  public void reconfigure(CoreConfig.Audit auditCfg) {
+    Path base = defaultBaseDir(auditCfg.directory != null ? auditCfg.directory : "sentinelcore");
+    this.baseDir = base;
+    this.rotation = auditCfg.rotation != null ? auditCfg.rotation : "daily";
+    this.retentionDays = auditCfg.retentionDays;
   }
 
-  void write(AuditEvent event) {
+  @Override
+  public void write(AuditEvent event) {
     try {
       Files.createDirectories(baseDir);
       Path file = currentFile(event.ts);

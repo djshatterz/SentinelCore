@@ -2,9 +2,11 @@ package org.github.shatterz.sentinelcore.audit;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.github.shatterz.sentinelcore.config.CoreConfig;
 import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
@@ -16,8 +18,7 @@ public final class AuditManager {
   private static volatile boolean ENABLED = true;
   private static volatile Set<String> EXCLUDED = java.util.Collections.emptySet();
   private static volatile Set<String> REDACT = java.util.Collections.emptySet();
-  private static volatile JsonlFileAuditSink SINK =
-      new JsonlFileAuditSink(JsonlFileAuditSink.defaultBaseDir("sentinelcore"), "daily", 7);
+  private static final List<AuditSink> SINKS = new CopyOnWriteArrayList<>();
 
   private AuditManager() {}
 
@@ -29,18 +30,42 @@ public final class AuditManager {
     REDACT = a.redactSubstrings != null ? a.redactSubstrings : java.util.Collections.emptySet();
     Path base =
         JsonlFileAuditSink.defaultBaseDir(a.directory != null ? a.directory : "sentinelcore");
-    if (SINK == null) {
-      SINK = new JsonlFileAuditSink(base, a.rotation, a.retentionDays);
-    } else {
-      SINK.reconfigure(base, a.rotation, a.retentionDays);
+    // ensure file sink exists
+    JsonlFileAuditSink fileSink = null;
+    for (AuditSink s : SINKS) {
+      if (s instanceof JsonlFileAuditSink) {
+        fileSink = (JsonlFileAuditSink) s;
+        break;
+      }
     }
-    SINK.cleanupOldFiles();
+    if (fileSink == null) {
+      fileSink = new JsonlFileAuditSink(base, a.rotation, a.retentionDays);
+      SINKS.add(fileSink);
+    }
+    fileSink.reconfigure(a);
+    fileSink.cleanupOldFiles();
+
+    // ledger sink via logger
+    boolean wantLedger =
+        a.ledgerEnabled && (a.ledgerMode == null || a.ledgerMode.equalsIgnoreCase("logger"));
+    boolean haveLedger = SINKS.stream().anyMatch(s -> s instanceof LoggerAuditSink);
+    if (wantLedger && !haveLedger) {
+      LoggerAuditSink ls = new LoggerAuditSink();
+      ls.reconfigure(a);
+      SINKS.add(ls);
+    } else if (!wantLedger && haveLedger) {
+      SINKS.removeIf(s -> s instanceof LoggerAuditSink);
+    } else if (wantLedger) {
+      SINKS.stream().filter(s -> s instanceof LoggerAuditSink).forEach(s -> s.reconfigure(a));
+    }
+
     LOG.info(
-        "Audit configured: enabled={}, dir={}, rotation={}, retentionDays={}",
+        "Audit configured: enabled={}, dir={}, rotation={}, retentionDays={}, ledger={}",
         ENABLED,
         base.toAbsolutePath(),
         a.rotation,
-        a.retentionDays);
+        a.retentionDays,
+        wantLedger ? a.ledgerMode : "off");
   }
 
   public static boolean isEnabled() {
@@ -67,13 +92,23 @@ public final class AuditManager {
     String redacted = applyRedaction(rawCommand);
     Map<String, Object> safeMeta = meta != null ? new HashMap<>(meta) : new HashMap<>();
     AuditEvent ev = AuditEvent.command(actor, actorName, redacted, safeMeta);
-    SINK.write(ev);
+    writeAll(ev);
   }
 
   public static void logSystem(String type, String message, Map<String, Object> meta) {
     if (!ENABLED) return;
     AuditEvent ev = AuditEvent.system(type, message, meta);
-    SINK.write(ev);
+    writeAll(ev);
+  }
+
+  private static void writeAll(AuditEvent ev) {
+    for (AuditSink s : SINKS) {
+      try {
+        s.write(ev);
+      } catch (Throwable t) {
+        LOG.warn("Audit sink write failed: {}", s.getClass().getSimpleName(), t);
+      }
+    }
   }
 
   private static String applyRedaction(String s) {

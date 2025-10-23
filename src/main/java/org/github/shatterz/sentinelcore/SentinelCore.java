@@ -33,6 +33,13 @@ public final class SentinelCore implements ModInitializer {
         AuditManager::applyConfig);
     SclogsCommands.register();
 
+    // Write a startup audit record so logs are always tail-able right after boot
+    try {
+      AuditManager.logSystem("startup", "server_boot", java.util.Map.of());
+    } catch (Throwable ignored) {
+      // non-fatal
+    }
+
     // category demo logs (will respect on/off later if you add level filtering)
     SentinelLogger.cat(SentinelCategories.AUDIT).info("Audit logging ready.");
     SentinelLogger.cat(SentinelCategories.PERM).info("Permission logging ready.");
