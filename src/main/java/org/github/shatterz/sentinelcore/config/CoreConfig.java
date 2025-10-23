@@ -235,6 +235,10 @@ public class CoreConfig {
     public int radius = 25;
     public int bottomY = 50;
     public String center = "world:0,100,0"; // format: "world:x,y,z"
+
+    /** If true, players with the permission node can bypass spawn protection. */
+    public boolean allowPermissionBypass = true;
+
     public Whitelist whitelist = new Whitelist();
     public Physics physics = new Physics();
 

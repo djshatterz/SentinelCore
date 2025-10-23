@@ -41,13 +41,14 @@ public final class SpawnProtectionManager {
       CFG = cfg.spawnProtection;
       parseCenter(CFG.center);
       LOG.info(
-          "SpawnProtection config applied: enabled={} shape={} radius={} bottomY={} center={} world={}",
+          "SpawnProtection config applied: enabled={} shape={} radius={} bottomY={} center={} world={} permBypass={}",
           CFG.enabled,
           CFG.shape,
           CFG.radius,
           CFG.bottomY,
           CENTER,
-          WORLD_ID);
+          WORLD_ID,
+          CFG.allowPermissionBypass);
     }
   }
 
@@ -108,9 +109,15 @@ public final class SpawnProtectionManager {
     }
 
     // Creative or admin bypass
-    if (player.isCreative()) return false;
-    if (player instanceof ServerPlayerEntity sp) {
-      if (PermissionManager.has(sp, "sentinelcore.spawnprot.bypass")) return false;
+    if (player.isCreative()) {
+      LOG.debug("Bypass (creative) at {} for player {}", pos, player.getName().getString());
+      return false;
+    }
+    if (CFG.allowPermissionBypass && player instanceof ServerPlayerEntity sp) {
+      if (PermissionManager.has(sp, "sentinelcore.spawnprot.bypass")) {
+        LOG.debug("Bypass (permission) at {} for player {}", pos, player.getName().getString());
+        return false;
+      }
     }
 
     // Shape check
