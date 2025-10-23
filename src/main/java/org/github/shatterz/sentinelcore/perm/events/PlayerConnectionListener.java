@@ -3,6 +3,7 @@ package org.github.shatterz.sentinelcore.perm.events;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
+import org.github.shatterz.sentinelcore.names.NameFormatter;
 import org.github.shatterz.sentinelcore.perm.PermissionManager;
 import org.github.shatterz.sentinelcore.perm.RoleContextManager;
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ public final class PlayerConnectionListener {
           // Set world context
           String worldId = player.getEntityWorld().getRegistryKey().getValue().toString();
           ctx.setWorldContext(worldId);
+
+          // Ensure display name is applied after context is fully initialized (group/op/world)
+          NameFormatter.updateDisplayName(player);
 
           LOG.info(
               "Player {} joined - initialized RoleContext: {}", player.getName().getString(), ctx);
