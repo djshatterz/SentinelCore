@@ -90,6 +90,15 @@ public final class PermCommands {
                                   String role = ctx.getArgument("role", String.class);
                                   boolean ok = ConfigManager.setUserRole(target.getUuid(), role);
                                   if (ok) {
+                                    // Immediately set runtime group to avoid race with reload,
+                                    // then refresh context and update display name
+                                    org.github.shatterz.sentinelcore.perm.PermissionManager
+                                        .setGroup(target.getUuid(), role);
+                                    org.github.shatterz.sentinelcore.perm.PermissionManager
+                                        .refreshContext(target.getUuid());
+                                    org.github.shatterz.sentinelcore.names.NameFormatter
+                                        .updateDisplayName(target);
+
                                     src.sendFeedback(
                                         () ->
                                             Text.literal(

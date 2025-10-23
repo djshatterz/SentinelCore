@@ -121,6 +121,75 @@ public class CoreConfig {
 
     p.defaultRole = "default";
 
+    // Community prefixes - default list from blueprint
+    Community comm = c.community;
+    comm.enabled = true;
+    comm.formatting.brackets.left = "[";
+    comm.formatting.brackets.right = "]";
+    comm.formatting.brackets.spaceAfter = true;
+    comm.formatting.tablist = true;
+    comm.formatting.chat = true;
+
+    // Add default community prefixes from blueprint
+    comm.prefixes.put("Clymunity", new Community.PrefixConfig("dark_green"));
+    comm.prefixes.put("Pawpack", new Community.PrefixConfig("aqua"));
+    comm.prefixes.put("Flockecrew", new Community.PrefixConfig("green"));
+    comm.prefixes.put("Pixelite", new Community.PrefixConfig("light_purple"));
+    comm.prefixes.put("Blizzunity", new Community.PrefixConfig("gold"));
+    comm.prefixes.put("Spaceschnittchen", new Community.PrefixConfig("red"));
+
+    // Team prefix - applies to moderator and admin groups
+    comm.teamPrefix.enabled = true;
+    comm.teamPrefix.label = "Team";
+    comm.teamPrefix.color = "gold";
+    comm.teamPrefix.appliesTo.add("moderator");
+    comm.teamPrefix.appliesTo.add("admin");
+    comm.teamPrefix.style.bold = false;
+    comm.teamPrefix.style.italic = false;
+
     return c;
+  }
+
+  /** Community and team prefix configuration schema. */
+  public static class Community {
+    public boolean enabled = true;
+    public Formatting formatting = new Formatting();
+    public Map<String, PrefixConfig> prefixes = new HashMap<>();
+    public TeamPrefix teamPrefix = new TeamPrefix();
+
+    public static class Formatting {
+      public Brackets brackets = new Brackets();
+      public boolean tablist = true;
+      public boolean chat = true;
+
+      public static class Brackets {
+        public String left = "[";
+        public String right = "]";
+        public boolean spaceAfter = true;
+      }
+    }
+
+    public static class PrefixConfig {
+      public String color = "white";
+
+      public PrefixConfig() {}
+
+      public PrefixConfig(String color) {
+        this.color = color;
+      }
+    }
+
+    public static class TeamPrefix {
+      public boolean enabled = true;
+      public String label = "Team";
+      public String color = "gold";
+      public Set<String> appliesTo = new HashSet<>();
+      public Style style = new Style();
+
+      public static class Style {
+        public boolean bold = false;
+        public boolean italic = false;
+      }
+    }
   }
 }

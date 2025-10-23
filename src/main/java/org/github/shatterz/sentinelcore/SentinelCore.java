@@ -6,6 +6,8 @@ import org.github.shatterz.sentinelcore.audit.SclogsCommands;
 import org.github.shatterz.sentinelcore.flags.FeatureFlagRegistry;
 import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
+import org.github.shatterz.sentinelcore.names.CommunityCommands;
+import org.github.shatterz.sentinelcore.names.CommunityPrefixManager;
 import org.github.shatterz.sentinelcore.perm.PermCommands;
 import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
 import org.github.shatterz.sentinelcore.perm.events.PlayerConnectionListener;
@@ -23,6 +25,10 @@ public final class SentinelCore implements ModInitializer {
     PermissionBootstrap.init();
     PermCommands.register();
     PlayerConnectionListener.register();
+
+    // Initialize community prefix system
+    CommunityPrefixManager.init();
+    CommunityCommands.register();
 
     // config + flags (hot-reload is inside ConfigManager; FeatureFlagRegistry wires a callback)
     FeatureFlagRegistry.wireReload();
