@@ -9,6 +9,9 @@ import java.nio.file.*;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.io.BufferedWriter;
+import java.util.UUID;
+
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,41 +45,43 @@ public final class ConfigManager {
     return CURRENT;
   }
 
-    public static void init(Consumer<CoreConfig> onReload){
-        try {
-            Files.createDirectories(configDir());
-            Path yml = yamlPath();
-            Path json = jsonPath();
-            if (!Files.exists(yml) && !Files.exists(json)) {
-                saveYAML(CoreConfig.defaults());
-                LOG.info("Created default config at {}", yml.toAbsolutePath());
-            }
-            CURRENT = load();
-            LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
-            ON_RELOAD = onReload;               // <-- store callback
-            startWatcher(onReload);
-        } catch (IOException e) {
-            LOG.error("Failed to init config, using defaults", e);
-            CURRENT = CoreConfig.defaults();
-        }
+  public static void init(Consumer<CoreConfig> onReload) {
+    try {
+      Files.createDirectories(configDir());
+      Path yml = yamlPath();
+      Path json = jsonPath();
+      if (!Files.exists(yml) && !Files.exists(json)) {
+        saveYAML(CoreConfig.defaults());
+        LOG.info("Created default config at {}", yml.toAbsolutePath());
+      }
+      CURRENT = load();
+      LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
+      ON_RELOAD = onReload; // <-- store callback
+      startWatcher(onReload);
+    } catch (IOException e) {
+      LOG.error("Failed to init config, using defaults", e);
+      CURRENT = CoreConfig.defaults();
     }
+  }
 
-    public static synchronized boolean reloadNow() {
+  public static synchronized boolean reloadNow() {
+    try {
+      CoreConfig newCfg = load();
+      CURRENT = newCfg;
+      LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
+      if (ON_RELOAD != null) {
         try {
-            CoreConfig newCfg = load();
-            CURRENT = newCfg;
-            LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
-            if (ON_RELOAD != null) {
-                try { ON_RELOAD.accept(newCfg); } catch (Exception cb) {
-                    LOG.error("Reload callback failed", cb);
-                }
-            }
-            return true;
-        } catch (Exception ex) {
-            LOG.error("Manual reload failed", ex);
-            return false;
+          ON_RELOAD.accept(newCfg);
+        } catch (Exception cb) {
+          LOG.error("Reload callback failed", cb);
         }
+      }
+      return true;
+    } catch (Exception ex) {
+      LOG.error("Manual reload failed", ex);
+      return false;
     }
+  }
 
   public static Path fileInUse() {
     return Files.exists(yamlPath()) ? yamlPath() : jsonPath();
@@ -166,4 +171,43 @@ public final class ConfigManager {
                 },
                 "SentinelCore-ConfigWatcher-Shutdown"));
   }
+
+    private static void saveCurrent() throws IOException {
+        Path file = fileInUse();
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".json")) {
+            try (OutputStream out = Files.newOutputStream(file)) {
+                JSON.writerWithDefaultPrettyPrinter().writeValue(out, CURRENT);
+            }
+        } else {
+            try (OutputStream out = Files.newOutputStream(file)) {
+                YAML.writerWithDefaultPrettyPrinter().writeValue(out, CURRENT);
+            }
+        }
+    }
+
+    public static synchronized boolean setUserRole(UUID uuid, String role) {
+        try {
+            if (CURRENT.permissions == null) {
+                CURRENT.permissions = new CoreConfig.Permissions();
+            }
+            if (CURRENT.permissions.userRoles == null) {
+                CURRENT.permissions.userRoles = new java.util.HashMap<>();
+            }
+            CURRENT.permissions.userRoles.put(uuid.toString(), role);
+            saveCurrent(); // persist to file
+            LOG.info("Set role {} for {}", role, uuid);
+            if (ON_RELOAD != null) {
+                try { ON_RELOAD.accept(CURRENT); } catch (Exception cb) {
+                    LOG.error("Reload callback failed after role change", cb);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            LOG.error("Failed to set role for {} to {}", uuid, role, e);
+            return false;
+        }
+    }
+
+
 }
