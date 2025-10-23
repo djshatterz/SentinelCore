@@ -24,6 +24,9 @@ public class CoreConfig {
   /** Community and team prefix configuration. */
   public Community community = new Community();
 
+  /** Spawn protection configuration. */
+  public SpawnProtection spawnProtection = new SpawnProtection();
+
   /** Default constructor populates nothing; use defaults() to create a prefilled config. */
   public CoreConfig() {}
 
@@ -222,6 +225,37 @@ public class CoreConfig {
         public boolean bold = false;
         public boolean italic = false;
       }
+    }
+  }
+
+  /** Spawn protection configuration schema. */
+  public static class SpawnProtection {
+    public boolean enabled = true;
+    public String shape = "cylinder";
+    public int radius = 25;
+    public int bottomY = 50;
+    public String center = "world:0,100,0"; // format: "world:x,y,z"
+    public Whitelist whitelist = new Whitelist();
+    public Physics physics = new Physics();
+
+    public static class Whitelist {
+      public Set<String> interact = new HashSet<>();
+
+      public Whitelist() {
+        interact.add("minecraft:crafting_table");
+        interact.add("minecraft:chest");
+        interact.add("minecraft:ender_chest");
+        interact.add("minecraft:enchanting_table");
+        interact.add("minecraft:shulker_box");
+      }
+    }
+
+    public static class Physics {
+      public boolean blockExplosions = true;
+      public boolean blockPistons = true;
+      public boolean blockFluids = true;
+      public boolean blockEndermen = true;
+      public boolean blockMobSpawn = true;
     }
   }
 }

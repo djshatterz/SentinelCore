@@ -13,6 +13,8 @@ import org.github.shatterz.sentinelcore.names.CommunityPrefixManager;
 import org.github.shatterz.sentinelcore.perm.PermCommands;
 import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
 import org.github.shatterz.sentinelcore.perm.events.PlayerConnectionListener;
+import org.github.shatterz.sentinelcore.protection.SpawnProtCommands;
+import org.github.shatterz.sentinelcore.protection.SpawnProtectionManager;
 import org.slf4j.Logger;
 
 public final class SentinelCore implements ModInitializer {
@@ -46,6 +48,13 @@ public final class SentinelCore implements ModInitializer {
     org.github.shatterz.sentinelcore.config.ConfigManager.addReloadListener(
         MovementManager::applyConfig);
     MoveCommands.register();
+
+    // Spawn protection system + commands
+    SpawnProtectionManager.applyConfig(org.github.shatterz.sentinelcore.config.ConfigManager.get());
+    org.github.shatterz.sentinelcore.config.ConfigManager.addReloadListener(
+        SpawnProtectionManager::applyConfig);
+    SpawnProtectionManager.registerListeners();
+    SpawnProtCommands.register();
 
     // Write a startup audit record so logs are always tail-able right after boot
     try {
