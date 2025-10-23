@@ -1,18 +1,48 @@
 permissions:
   backend: memory
   defaultRole: default
+  
+  # Group hierarchy: default → moderator → admin → developer → op
   roles:
     default:
       allow:
         - "sentinelcore.info"
       deny: []
       inherits: []
-    mod:
+      
+    moderator:
       allow:
-        - "sentinelcore.*"
+        - "sentinelcore.mod.*"
+        - "sentinelcore.modmode.use"
+      deny: []
+      inherits:
+        - "default"
+        
+    admin:
+      allow:
+        - "sentinelcore.admin.*"
+        - "sentinelcore.warps.*"
       deny:
         - "sentinelcore.admin.dangerous"
       inherits:
-        - "default"
+        - "moderator"
+        
+    developer:
+      allow:
+        - "sentinelcore.admin.dangerous"
+        - "sentinelcore.dev.*"
+      deny: []
+      inherits:
+        - "admin"
+        
+    op:
+      allow:
+        - "sentinelcore.*"
+      deny: []
+      inherits:
+        - "developer"
+  
+  # Example user role assignments
   userRoles:
-    "00000000-0000-0000-0000-000000000000": "mod"   # example uuid
+    "00000000-0000-0000-0000-000000000000": "moderator"   # example uuid
+

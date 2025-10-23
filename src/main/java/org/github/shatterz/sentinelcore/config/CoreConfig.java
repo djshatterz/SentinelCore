@@ -46,10 +46,42 @@ public class CoreConfig {
     CoreConfig c = new CoreConfig();
     c.featureFlags.put("exampleFlag", false);
 
-    // default role exists but grants nothing
+    // Setup group hierarchy: default → moderator → admin → developer → op
     Permissions p = c.permissions;
-    Role def = new Role();
-    p.roles.put("default", def);
+
+    // Default role - base permissions for all players
+    Role defaultRole = new Role();
+    defaultRole.allow.add("sentinelcore.info");
+    p.roles.put("default", defaultRole);
+
+    // Moderator - inherits from default
+    Role moderator = new Role();
+    moderator.allow.add("sentinelcore.mod.*");
+    moderator.allow.add("sentinelcore.modmode.use");
+    moderator.inherits.add("default");
+    p.roles.put("moderator", moderator);
+
+    // Admin - inherits from moderator
+    Role admin = new Role();
+    admin.allow.add("sentinelcore.admin.*");
+    admin.allow.add("sentinelcore.warps.*");
+    admin.deny.add("sentinelcore.admin.dangerous");
+    admin.inherits.add("moderator");
+    p.roles.put("admin", admin);
+
+    // Developer - inherits from admin
+    Role developer = new Role();
+    developer.allow.add("sentinelcore.admin.dangerous");
+    developer.allow.add("sentinelcore.dev.*");
+    developer.inherits.add("admin");
+    p.roles.put("developer", developer);
+
+    // Op - top-level, inherits from developer
+    Role op = new Role();
+    op.allow.add("sentinelcore.*");
+    op.inherits.add("developer");
+    p.roles.put("op", op);
+
     p.defaultRole = "default";
 
     return c;
