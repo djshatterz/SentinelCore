@@ -62,10 +62,7 @@ public final class ConfigManager {
       }
       CURRENT = load();
       LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
-      // Store callback and immediately notify listeners for initial load so dependent systems
-      // can apply configuration before first use (e.g., permissions backend, name formatting)
       ON_RELOAD = onReload; // <-- store legacy single callback
-      notifyListeners(CURRENT);
       startWatcher(onReload);
     } catch (IOException e) {
       LOG.error("Failed to init config, using defaults", e);
