@@ -60,7 +60,7 @@
 		{
 			"label": "Run Server",
 			"type": "shell",
-			"command": ".\\gradlew.bat runServer",
+			"command": ".\\gradlew.bat runServer -Dorg.gradle.jvmargs=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005\"",
 			"problemMatcher": [],
 			"isBackground": true,
 			"group": {
@@ -76,7 +76,7 @@
 		{
 			"label": "Run Client",
 			"type": "shell",
-			"command": ".\\gradlew.bat runClient",
+			"command": ".\\gradlew.bat runClient -Dorg.gradle.jvmargs=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006\"",
 			"problemMatcher": [],
 			"isBackground": true,
 			"group": "test",

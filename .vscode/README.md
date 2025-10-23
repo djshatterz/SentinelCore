@@ -24,9 +24,23 @@ Press `Ctrl+Shift+P` and type "Tasks: Run Task", then choose:
 
 ### Testing Area
 The **Testing** sidebar (beaker icon) shows Java test classes when available. You can:
+
 - Run individual tests
 - Debug tests
 - View test coverage
+
+### Debugging
+
+The **Run and Debug** panel (Ctrl+Shift+D) provides two configurations:
+
+- **Debug Minecraft Server** - Attaches to server on port 5005
+- **Debug Minecraft Client** - Attaches to client on port 5006
+
+To debug:
+1. Press `Ctrl+Shift+R` (server) or `Ctrl+Shift+C` (client) to start
+2. Wait for "Listening for transport dt_socket at address: XXXX" message
+3. Press F5 and select the appropriate debug configuration
+4. Set breakpoints and debug normally
 
 ## Available Tasks
 
