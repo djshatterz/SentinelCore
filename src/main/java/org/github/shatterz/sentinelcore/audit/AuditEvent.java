@@ -24,4 +24,12 @@ public class AuditEvent {
     e.meta = meta;
     return e;
   }
+
+  public static AuditEvent system(String type, String message, Map<String, Object> meta) {
+    AuditEvent e = new AuditEvent();
+    e.type = type != null ? type : "system";
+    e.command = message;
+    e.meta = meta;
+    return e;
+  }
 }

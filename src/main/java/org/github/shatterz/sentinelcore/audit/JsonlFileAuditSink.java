@@ -2,6 +2,7 @@ package org.github.shatterz.sentinelcore.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +27,7 @@ final class JsonlFileAuditSink {
 
   static {
     MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    MAPPER.registerModule(new JavaTimeModule());
   }
 
   private Path baseDir; // <gameDir>/logs/<directory>

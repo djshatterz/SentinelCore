@@ -70,7 +70,15 @@ public final class SclogsCommands {
   }
 
   private static int doTail(ServerCommandSource src, int n) {
-    Path dir = JsonlFileAuditSink.defaultBaseDir("sentinelcore");
+    String subdir = "sentinelcore";
+    var cfg = org.github.shatterz.sentinelcore.config.ConfigManager.get();
+    if (cfg != null
+        && cfg.audit != null
+        && cfg.audit.directory != null
+        && !cfg.audit.directory.isBlank()) {
+      subdir = cfg.audit.directory;
+    }
+    Path dir = JsonlFileAuditSink.defaultBaseDir(subdir);
     try {
       if (!Files.exists(dir)) {
         src.sendFeedback(() -> Text.literal("No audit logs yet."), false);

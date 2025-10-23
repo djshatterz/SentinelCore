@@ -50,6 +50,9 @@ public final class AuditManager {
   public static void toggle(boolean enabled) {
     ENABLED = enabled;
     LOG.info("Audit logging {}", enabled ? "enabled" : "disabled");
+    // write a system event so /sclogs tail shows something immediately
+    logSystem(
+        "audit_toggle", enabled ? "enabled" : "disabled", java.util.Map.of("enabled", enabled));
   }
 
   public static void logAdminCommand(
@@ -64,6 +67,12 @@ public final class AuditManager {
     String redacted = applyRedaction(rawCommand);
     Map<String, Object> safeMeta = meta != null ? new HashMap<>(meta) : new HashMap<>();
     AuditEvent ev = AuditEvent.command(actor, actorName, redacted, safeMeta);
+    SINK.write(ev);
+  }
+
+  public static void logSystem(String type, String message, Map<String, Object> meta) {
+    if (!ENABLED) return;
+    AuditEvent ev = AuditEvent.system(type, message, meta);
     SINK.write(ev);
   }
 
