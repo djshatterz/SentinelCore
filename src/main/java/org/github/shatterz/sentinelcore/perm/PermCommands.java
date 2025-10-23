@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.command.argument.IdentifierArgumentType.identifier; // or StringArgumentType if you prefer
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
 
 public final class PermCommands {
@@ -33,7 +32,7 @@ public final class PermCommands {
                                                 src.sendFeedback(() -> Text.literal("Player-only for now."), false);
                                                 return 1;
                                             }
-                                            String node = string().parse(ctx.getArguments().get("node").toString());
+                                            String node = ctx.getArgument("node", String.class);
                                             UUID uuid = player.getUuid();
                                             boolean ok = Perms.check(uuid, node, Map.of());
                                             src.sendFeedback(() -> Text.literal("perm(" + node + ") = " + ok), false);

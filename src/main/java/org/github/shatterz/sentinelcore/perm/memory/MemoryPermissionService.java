@@ -22,22 +22,14 @@ public final class MemoryPermissionService implements PermissionService {
     public void reload(CoreConfig cfg) {
         roles.clear();
         userRoles.clear();
-        if (cfg.permissions != null) {
-            defaultRole = Optional.ofNullable(cfg.permissions.defaultRole).orElse("default");
-            if (cfg.permissions.roles != null) {
-                cfg.permissions.roles.forEach((name, role) -> {
-                    RoleView v = new RoleView();
-                    if (role.allow != null) v.allow.addAll(role.allow);
-                    if (role.deny != null) v.deny.addAll(role.deny);
-                    if (role.inherits != null) v.inherits.addAll(role.inherits);
-                    roles.put(name, v);
-                });
-            }
-            if (cfg.permissions.userRoles != null) {
-                cfg.permissions.userRoles.forEach((uuid, role) -> {
-                    try { userRoles.put(UUID.fromString(uuid), role); } catch (Exception ignored) {}
-                });
-            }
+        if (cfg.permissions.roles != null) {
+            cfg.permissions.roles.forEach((name, role) -> {  // role is CoreConfig.Role
+                RoleView v = new RoleView();
+                if (role.allow != null)    v.allow.addAll(role.allow);
+                if (role.deny != null)     v.deny.addAll(role.deny);
+                if (role.inherits != null) v.inherits.addAll(role.inherits);
+                roles.put(name, v);
+            });
         }
     }
 
