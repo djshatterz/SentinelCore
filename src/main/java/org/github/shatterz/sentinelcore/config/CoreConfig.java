@@ -18,6 +18,9 @@ public class CoreConfig {
   /** Audit logging configuration. */
   public Audit audit = new Audit();
 
+  /** Community and team prefix configuration. */
+  public Community community = new Community();
+
   /** Default constructor populates nothing; use defaults() to create a prefilled config. */
   public CoreConfig() {}
 
