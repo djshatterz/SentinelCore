@@ -79,43 +79,65 @@ public final class SpawnProtectionManager {
           return ActionResult.PASS;
         });
 
-    // Interact whitelist and block placement prevention
+    // Interact whitelist and block placement (and bucket) prevention
     UseBlockCallback.EVENT.register(
         (player, world, hand, hitResult) -> {
           BlockPos clicked = hitResult.getBlockPos();
           BlockPos target = clicked.offset(hitResult.getSide());
           Item held = player.getStackInHand(hand).getItem();
 
-          // If attempting to place a block, check target placement position
-          if (held instanceof BlockItem) {
-            if (isProtected(world, target, player) || isProtected(world, clicked, player)) {
-              if (player instanceof ServerPlayerEntity sp) {
-                sp.sendMessage(Text.literal("Spawn is protected."), true);
-              }
-              return ActionResult.FAIL;
-            }
-          }
-
-          // Otherwise, this is an interaction with an existing block; apply whitelist
+          // If clicking a block inside the zone, allow whitelisted interactions (unless sneaking)
           if (isProtected(world, clicked, player)) {
             BlockState state = world.getBlockState(clicked);
             String blockId = Registries.BLOCK.getId(state.getBlock()).toString();
-            if (!CFG.whitelist.interact.contains(blockId)) {
-              if (player instanceof ServerPlayerEntity sp) {
-                sp.sendMessage(Text.literal("Spawn is protected."), true);
-              }
-              return ActionResult.FAIL;
+            boolean whitelisted = CFG.whitelist.interact.contains(blockId);
+            if (whitelisted && !player.isSneaking()) {
+              return ActionResult.PASS; // allow opening containers etc.
             }
+            // Otherwise block the interaction
+            if (player instanceof ServerPlayerEntity sp) {
+              sp.sendMessage(Text.literal("Spawn is protected."), true);
+            }
+            return ActionResult.FAIL;
           }
+
+          // If attempting to place a block or fluid into the zone from outside
+          boolean placingBlock = held instanceof BlockItem;
+          boolean usingBucket = held instanceof net.minecraft.item.BucketItem;
+          if ((placingBlock || usingBucket) && isProtected(world, target, player)) {
+            if (player instanceof ServerPlayerEntity sp) {
+              sp.sendMessage(Text.literal("Spawn is protected."), true);
+            }
+            return ActionResult.FAIL;
+          }
+
           return ActionResult.PASS;
         });
 
     LOG.info("SpawnProtection event listeners registered.");
   }
 
-  private static boolean isProtected(World world, BlockPos pos, PlayerEntity player) {
+  private static boolean isInsideZone(World world, BlockPos pos) {
     if (!CFG.enabled) return false;
     if (!(world instanceof ServerWorld sw)) return false;
+
+    String wid = sw.getRegistryKey().getValue().toString();
+    if (!wid.equals(WORLD_ID)) return false;
+
+    if ("cylinder".equalsIgnoreCase(CFG.shape)) {
+      double dx = pos.getX() + 0.5 - CENTER.x;
+      double dz = pos.getZ() + 0.5 - CENTER.z;
+      double distSq = dx * dx + dz * dz;
+      if (distSq > CFG.radius * CFG.radius) return false;
+      if (pos.getY() < CFG.bottomY) return false;
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isProtected(World world, BlockPos pos, PlayerEntity player) {
+    if (!(world instanceof ServerWorld sw)) return false;
+    if (!CFG.enabled) return false;
 
     // Check world match
     String wid = sw.getRegistryKey().getValue().toString();
@@ -137,22 +159,8 @@ public final class SpawnProtectionManager {
     }
 
     // Shape check
-    if ("cylinder".equalsIgnoreCase(CFG.shape)) {
-      double dx = pos.getX() + 0.5 - CENTER.x;
-      double dz = pos.getZ() + 0.5 - CENTER.z;
-      double distSq = dx * dx + dz * dz;
-      double maxDistSq = CFG.radius * CFG.radius;
-      if (distSq > maxDistSq) {
-        LOG.debug("Outside radius: dist²={} > max²={}", distSq, maxDistSq);
-        return false;
-      }
-      // Bottom Y check
-      if (pos.getY() < CFG.bottomY) {
-        LOG.debug("Below bottom Y: {} < {}", pos.getY(), CFG.bottomY);
-        return false;
-      }
-      LOG.debug("Protection active at {} for player {}", pos, player.getName().getString());
-    }
+    if (!isInsideZone(world, pos)) return false;
+    LOG.debug("Protection active at {} for player {}", pos, player.getName().getString());
     // Add sphere support if needed
 
     return true;
