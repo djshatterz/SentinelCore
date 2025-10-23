@@ -18,6 +18,9 @@ public class CoreConfig {
   /** Audit logging configuration. */
   public Audit audit = new Audit();
 
+  /** Movement and safe-teleport configuration. */
+  public Movement movement = new Movement();
+
   /** Community and team prefix configuration. */
   public Community community = new Community();
 
@@ -124,6 +127,16 @@ public class CoreConfig {
 
     p.defaultRole = "default";
 
+    // Movement defaults
+    c.movement.safeTeleport.searchUpDown = 6;
+    c.movement.safeTeleport.avoidLava = true;
+    c.movement.safeTeleport.avoidPowderSnow = true;
+    c.movement.safeTeleport.avoidCactusFire = true;
+    c.movement.safeTeleport.centerOnBlock = true;
+    c.movement.dismountBeforeTeleport = true;
+    c.movement.cancelGliding = true;
+    c.movement.removeSpawnElytra = true;
+
     // Community prefixes - default list from blueprint
     Community comm = c.community;
     comm.enabled = true;
@@ -151,6 +164,22 @@ public class CoreConfig {
     comm.teamPrefix.style.italic = false;
 
     return c;
+  }
+
+  /** Movement configuration schema. */
+  public static class Movement {
+    public SafeTeleport safeTeleport = new SafeTeleport();
+    public boolean dismountBeforeTeleport = true;
+    public boolean cancelGliding = true;
+    public boolean removeSpawnElytra = true;
+
+    public static class SafeTeleport {
+      public int searchUpDown = 6;
+      public boolean avoidLava = true;
+      public boolean avoidPowderSnow = true;
+      public boolean avoidCactusFire = true;
+      public boolean centerOnBlock = true;
+    }
   }
 
   /** Community and team prefix configuration schema. */
