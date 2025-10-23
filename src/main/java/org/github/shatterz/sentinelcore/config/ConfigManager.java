@@ -65,6 +65,7 @@ public final class ConfigManager {
       ON_RELOAD = onReload; // <-- store legacy single callback
       // Immediately notify listeners on initial load so dependent systems (permissions,
       // name formatting, audit) can apply configuration before first use
+      // permissions backend, name formatting, audit) are configured before first use
       notifyListeners(CURRENT);
       startWatcher(onReload);
     } catch (IOException e) {
