@@ -1,0 +1,19 @@
+{
+	"recommendations": [
+		// Java essentials
+		"vscjava.vscode-java-pack",
+		"vscjava.vscode-gradle",
+		
+		// Code quality
+		"redhat.vscode-yaml",
+		"streetsidesoftware.code-spell-checker",
+		
+		// Git
+		"eamodio.gitlens",
+		"github.vscode-pull-request-github",
+		
+		// Productivity
+		"aaron-bond.better-comments",
+		"usernamehw.errorlens"
+	]
+}

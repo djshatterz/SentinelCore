@@ -10,7 +10,6 @@ out/
 .classpath
 .settings/
 bin/
-.vscode/
 logs/
 run/
 crash-reports/

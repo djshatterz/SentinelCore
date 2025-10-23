@@ -1,0 +1,34 @@
+[
+	// Build shortcuts
+	{
+		"key": "ctrl+shift+b",
+		"command": "workbench.action.tasks.build",
+		"when": "!inDebugMode"
+	},
+	{
+		"key": "ctrl+alt+b",
+		"command": "workbench.action.tasks.runTask",
+		"args": "Clean Build"
+	},
+	{
+		"key": "ctrl+alt+s",
+		"command": "workbench.action.tasks.runTask",
+		"args": "Spotless Apply"
+	},
+	// Run shortcuts
+	{
+		"key": "ctrl+shift+r",
+		"command": "workbench.action.tasks.runTask",
+		"args": "Run Server"
+	},
+	{
+		"key": "ctrl+shift+c",
+		"command": "workbench.action.tasks.runTask",
+		"args": "Run Client"
+	},
+	// Test shortcut
+	{
+		"key": "ctrl+shift+t",
+		"command": "workbench.action.tasks.test"
+	}
+]

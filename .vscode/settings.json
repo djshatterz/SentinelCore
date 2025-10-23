@@ -1,0 +1,35 @@
+{
+	// Java settings
+	"java.configuration.updateBuildConfiguration": "automatic",
+	"java.compile.nullAnalysis.mode": "automatic",
+	
+	// Testing
+	"java.test.config": {},
+	"java.test.defaultConfig": "",
+	
+	// Tasks in status bar
+	"tasks.autoDetect": "on",
+	"tasks.problemMatchers.neverPrompt": false,
+	
+	// Terminal settings
+	"terminal.integrated.defaultProfile.windows": "PowerShell",
+	
+	// Files to exclude from explorer
+	"files.exclude": {
+		"**/.gradle": true,
+		"**/build": false,
+		"**/.idea": true
+	},
+	
+	// Format on save
+	"editor.formatOnSave": false,
+	"editor.codeActionsOnSave": {
+		"source.organizeImports": "explicit"
+	},
+	
+	// File associations
+	"files.associations": {
+		"*.yaml": "yaml",
+		"*.json": "jsonc"
+	}
+}
