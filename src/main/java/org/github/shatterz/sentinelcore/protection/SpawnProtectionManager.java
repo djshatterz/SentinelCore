@@ -7,6 +7,8 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -77,12 +79,26 @@ public final class SpawnProtectionManager {
           return ActionResult.PASS;
         });
 
-    // Interact whitelist
+    // Interact whitelist and block placement prevention
     UseBlockCallback.EVENT.register(
         (player, world, hand, hitResult) -> {
-          BlockPos pos = hitResult.getBlockPos();
-          if (isProtected(world, pos, player)) {
-            BlockState state = world.getBlockState(pos);
+          BlockPos clicked = hitResult.getBlockPos();
+          BlockPos target = clicked.offset(hitResult.getSide());
+          Item held = player.getStackInHand(hand).getItem();
+
+          // If attempting to place a block, check target placement position
+          if (held instanceof BlockItem) {
+            if (isProtected(world, target, player) || isProtected(world, clicked, player)) {
+              if (player instanceof ServerPlayerEntity sp) {
+                sp.sendMessage(Text.literal("Spawn is protected."), true);
+              }
+              return ActionResult.FAIL;
+            }
+          }
+
+          // Otherwise, this is an interaction with an existing block; apply whitelist
+          if (isProtected(world, clicked, player)) {
+            BlockState state = world.getBlockState(clicked);
             String blockId = Registries.BLOCK.getId(state.getBlock()).toString();
             if (!CFG.whitelist.interact.contains(blockId)) {
               if (player instanceof ServerPlayerEntity sp) {
