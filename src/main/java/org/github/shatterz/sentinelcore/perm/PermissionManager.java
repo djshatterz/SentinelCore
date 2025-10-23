@@ -117,4 +117,31 @@ public final class PermissionManager {
   private static PermissionService getService() {
     return Perms.getService();
   }
+
+  /**
+   * Check if LuckPerms is the active backend.
+   *
+   * @return true if using LuckPerms (bridge or mirror mode)
+   */
+  public static boolean isUsingLuckPerms() {
+    PermissionService svc = getService();
+    return svc != null && svc.name().startsWith("luckperms");
+  }
+
+  /**
+   * Refresh a player's permission context from the underlying service. Useful when permissions
+   * change externally (e.g., via LuckPerms commands).
+   *
+   * <p>TODO: When LuckPerms is active, query LP API to refresh group/perms
+   *
+   * @param uuid player UUID
+   */
+  public static void refreshContext(UUID uuid) {
+    PermissionService svc = getService();
+    if (svc != null) {
+      String currentGroup = svc.getGroup(uuid);
+      RoleContextManager.setGroup(uuid, currentGroup);
+      LOG.debug("Refreshed permission context for {}", uuid);
+    }
+  }
 }

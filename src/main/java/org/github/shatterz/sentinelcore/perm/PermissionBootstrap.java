@@ -44,6 +44,8 @@ public final class PermissionBootstrap {
       if (lp.isAvailable()) {
         current = lp;
         Perms.install(current);
+        // TODO: Uncomment once LuckPermsEventListener is fully implemented
+        // LuckPermsEventListener.register(lp);
         LOG.info("Using permission backend: luckperms (bridge mode)");
       } else {
         LOG.warn("LuckPerms not available, falling back to memory backend");
@@ -56,6 +58,8 @@ public final class PermissionBootstrap {
       if (lp.isAvailable()) {
         current = lp;
         Perms.install(current);
+        // TODO: Uncomment once LuckPermsEventListener is fully implemented
+        // LuckPermsEventListener.register(lp);
         LOG.info("Using permission backend: luckperms (mirror mode)");
       } else {
         LOG.warn("LuckPerms not available, falling back to memory backend");
