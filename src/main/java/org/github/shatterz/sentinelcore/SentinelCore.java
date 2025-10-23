@@ -6,6 +6,8 @@ import org.github.shatterz.sentinelcore.audit.SclogsCommands;
 import org.github.shatterz.sentinelcore.flags.FeatureFlagRegistry;
 import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
+import org.github.shatterz.sentinelcore.movement.MoveCommands;
+import org.github.shatterz.sentinelcore.movement.MovementManager;
 import org.github.shatterz.sentinelcore.names.CommunityCommands;
 import org.github.shatterz.sentinelcore.names.CommunityPrefixManager;
 import org.github.shatterz.sentinelcore.perm.PermCommands;
@@ -38,6 +40,12 @@ public final class SentinelCore implements ModInitializer {
     org.github.shatterz.sentinelcore.config.ConfigManager.addReloadListener(
         AuditManager::applyConfig);
     SclogsCommands.register();
+
+    // Movement manager config + test commands
+    MovementManager.applyConfig(org.github.shatterz.sentinelcore.config.ConfigManager.get());
+    org.github.shatterz.sentinelcore.config.ConfigManager.addReloadListener(
+        MovementManager::applyConfig);
+    MoveCommands.register();
 
     // Write a startup audit record so logs are always tail-able right after boot
     try {
