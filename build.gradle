@@ -61,7 +61,42 @@ dependencies {
 
     // LuckPerms: compile against API; runtime jar goes in the server /mods folder
     compileOnly "net.luckperms:api:${project.luckperms_api_version}"
+
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2")
 }
+
+// Auto-create EULA and server.properties before runServer
+tasks.named("runServer") { t ->
+    doFirst {
+        // Prefer the task's workingDir if Loom sets it; otherwise use project directory / run
+        File runDir = (t.hasProperty('workingDir') && t.workingDir instanceof File && t.workingDir)
+                ? t.workingDir as File
+                : layout.projectDirectory.dir("run").asFile
+
+        if (!runDir.exists()) {
+            runDir.mkdirs()
+        }
+
+        File eula = new File(runDir, "eula.txt")
+        if (!eula.exists()) {
+            eula.text = "eula=true" + System.lineSeparator()
+            println "Created ${eula.absolutePath}"
+        }
+
+        File props = new File(runDir, "server.properties")
+        if (!props.exists()) {
+            props.text = """#Minecraft server properties
+motd=SentinelCore Dev
+server-port=25565
+online-mode=false
+max-players=20
+"""
+            println "Created ${props.absolutePath}"
+        }
+    }
+}
+
 
 processResources {
     inputs.property "version",           project.version

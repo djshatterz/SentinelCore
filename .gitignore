@@ -12,3 +12,6 @@ out/
 bin/
 .vscode/
 logs/
+run/
+crash-reports/
+*.log

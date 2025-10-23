@@ -1,0 +1,9 @@
+featureFlags:
+  exampleFlag: false
+
+logging:
+  audit: true
+  perm: true
+  move: true
+  modmode: true
+  spawn: true
