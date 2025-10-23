@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 public final class SpawnProtectionManager {
   private static final Logger LOG = SentinelLogger.cat(SentinelCategories.SPAWN);
   private static final Pattern CENTER_PATTERN =
-      Pattern.compile("([^:]+):(-?\\d+),(-?\\d+),(-?\\d+)");
+      Pattern.compile("([^:]+:[^:]+):(-?\\d+),(-?\\d+),(-?\\d+)");
 
   private static volatile CoreConfig.SpawnProtection CFG = new CoreConfig.SpawnProtection();
   private static volatile Vec3d CENTER = new Vec3d(0, 100, 0);
@@ -134,7 +134,7 @@ public final class SpawnProtectionManager {
       CENTER = new Vec3d(x, y, z);
     } else {
       LOG.warn("Invalid spawn protection center format: {}", s);
-      WORLD_ID = "world";
+      WORLD_ID = "minecraft:overworld";
       CENTER = new Vec3d(0, 100, 0);
     }
   }
