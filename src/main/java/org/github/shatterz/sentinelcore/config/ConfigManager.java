@@ -63,6 +63,9 @@ public final class ConfigManager {
       CURRENT = load();
       LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
       ON_RELOAD = onReload; // <-- store legacy single callback
+      // Immediately notify listeners on initial load so dependent systems (permissions,
+      // name formatting, audit) can apply configuration before first use
+      notifyListeners(CURRENT);
       startWatcher(onReload);
     } catch (IOException e) {
       LOG.error("Failed to init config, using defaults", e);
