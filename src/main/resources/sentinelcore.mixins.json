@@ -3,10 +3,7 @@
   "minVersion": "0.8",
   "package": "org.github.shatterz.sentinelcore.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [
-    "ServerPlayerEntityMixin",
-    "PlayerEntityMixin"
-  ],
+  "mixins": [],
   "injectors": {
     "defaultRequire": 1
   },

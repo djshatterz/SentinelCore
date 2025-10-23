@@ -8,7 +8,6 @@ import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
 import org.github.shatterz.sentinelcore.names.CommunityCommands;
 import org.github.shatterz.sentinelcore.names.CommunityPrefixManager;
-import org.github.shatterz.sentinelcore.names.NameUpdateListener;
 import org.github.shatterz.sentinelcore.perm.PermCommands;
 import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
 import org.github.shatterz.sentinelcore.perm.events.PlayerConnectionListener;
@@ -30,7 +29,6 @@ public final class SentinelCore implements ModInitializer {
     // Initialize community prefix system
     CommunityPrefixManager.init();
     CommunityCommands.register();
-    NameUpdateListener.register();
 
     // config + flags (hot-reload is inside ConfigManager; FeatureFlagRegistry wires a callback)
     FeatureFlagRegistry.wireReload();
