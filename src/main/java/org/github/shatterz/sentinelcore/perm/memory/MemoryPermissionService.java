@@ -23,7 +23,14 @@ public final class MemoryPermissionService implements PermissionService {
   public void reload(CoreConfig cfg) {
     roles.clear();
     userRoles.clear();
-    if (cfg.permissions.roles != null) {
+    // update defaultRole from config
+    if (cfg.permissions != null && cfg.permissions.defaultRole != null) {
+      this.defaultRole = cfg.permissions.defaultRole;
+    } else {
+      this.defaultRole = "default";
+    }
+
+    if (cfg.permissions != null && cfg.permissions.roles != null) {
       cfg.permissions.roles.forEach(
           (name, role) -> { // role is CoreConfig.Role
             RoleView v = new RoleView();
@@ -31,6 +38,21 @@ public final class MemoryPermissionService implements PermissionService {
             if (role.deny != null) v.deny.addAll(role.deny);
             if (role.inherits != null) v.inherits.addAll(role.inherits);
             roles.put(name, v);
+          });
+    }
+
+    // load explicit user role assignments from config
+    if (cfg.permissions != null && cfg.permissions.userRoles != null) {
+      cfg.permissions.userRoles.forEach(
+          (uuidStr, roleName) -> {
+            try {
+              java.util.UUID uuid = java.util.UUID.fromString(uuidStr);
+              if (roleName != null && roles.containsKey(roleName)) {
+                userRoles.put(uuid, roleName);
+              }
+            } catch (IllegalArgumentException ignored) {
+              // skip invalid UUID strings
+            }
           });
     }
   }
