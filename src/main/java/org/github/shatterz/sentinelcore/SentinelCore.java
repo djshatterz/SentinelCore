@@ -6,6 +6,7 @@ import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
 import org.github.shatterz.sentinelcore.perm.PermCommands;
 import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
+import org.github.shatterz.sentinelcore.perm.events.PlayerConnectionListener;
 import org.slf4j.Logger;
 
 public final class SentinelCore implements ModInitializer {
@@ -15,8 +16,11 @@ public final class SentinelCore implements ModInitializer {
   public void onInitialize() {
     Logger log = SentinelLogger.root();
     log.info("[SentinelCore] Initializing base systems...");
+
+    // Initialize permission system
     PermissionBootstrap.init();
     PermCommands.register();
+    PlayerConnectionListener.register();
 
     // config + flags (hot-reload is inside ConfigManager; FeatureFlagRegistry wires a callback)
     FeatureFlagRegistry.wireReload();

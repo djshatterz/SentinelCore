@@ -23,7 +23,14 @@ public final class MemoryPermissionService implements PermissionService {
   public void reload(CoreConfig cfg) {
     roles.clear();
     userRoles.clear();
-    if (cfg.permissions.roles != null) {
+    // update defaultRole from config
+    if (cfg.permissions != null && cfg.permissions.defaultRole != null) {
+      this.defaultRole = cfg.permissions.defaultRole;
+    } else {
+      this.defaultRole = "default";
+    }
+
+    if (cfg.permissions != null && cfg.permissions.roles != null) {
       cfg.permissions.roles.forEach(
           (name, role) -> { // role is CoreConfig.Role
             RoleView v = new RoleView();
@@ -31,6 +38,21 @@ public final class MemoryPermissionService implements PermissionService {
             if (role.deny != null) v.deny.addAll(role.deny);
             if (role.inherits != null) v.inherits.addAll(role.inherits);
             roles.put(name, v);
+          });
+    }
+
+    // load explicit user role assignments from config
+    if (cfg.permissions != null && cfg.permissions.userRoles != null) {
+      cfg.permissions.userRoles.forEach(
+          (uuidStr, roleName) -> {
+            try {
+              java.util.UUID uuid = java.util.UUID.fromString(uuidStr);
+              if (roleName != null && roles.containsKey(roleName)) {
+                userRoles.put(uuid, roleName);
+              }
+            } catch (IllegalArgumentException ignored) {
+              // skip invalid UUID strings
+            }
           });
     }
   }
@@ -46,6 +68,43 @@ public final class MemoryPermissionService implements PermissionService {
     String role = userRoles.getOrDefault(subject, defaultRole);
     Set<String> visited = new HashSet<>();
     return resolve(role, node, visited);
+  }
+
+  @Override
+  public String getGroup(UUID subject) {
+    return userRoles.getOrDefault(subject, defaultRole);
+  }
+
+  @Override
+  public void setGroup(UUID subject, String group) {
+    if (group == null || !roles.containsKey(group)) {
+      userRoles.remove(subject);
+    } else {
+      userRoles.put(subject, group);
+    }
+  }
+
+  @Override
+  public List<String> getInheritedGroups(UUID subject) {
+    String primaryGroup = getGroup(subject);
+    List<String> inherited = new ArrayList<>();
+    Set<String> visited = new HashSet<>();
+    collectInherited(primaryGroup, inherited, visited);
+    return inherited;
+  }
+
+  @Override
+  public boolean groupExists(String group) {
+    return roles.containsKey(group);
+  }
+
+  private void collectInherited(String role, List<String> result, Set<String> visited) {
+    if (role == null || !roles.containsKey(role) || !visited.add(role)) return;
+    result.add(role);
+    RoleView r = roles.get(role);
+    for (String parent : r.inherits) {
+      collectInherited(parent, result, visited);
+    }
   }
 
   private boolean resolve(String role, String node, Set<String> visited) {

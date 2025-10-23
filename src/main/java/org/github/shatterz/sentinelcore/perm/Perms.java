@@ -28,4 +28,13 @@ public final class Perms {
   public static boolean check(UUID subject, String node) {
     return check(subject, node, Collections.emptyMap());
   }
+
+  /**
+   * Get the current permission service instance.
+   *
+   * @return the active service, or null if none installed
+   */
+  public static PermissionService getService() {
+    return IMPL.get();
+  }
 }
