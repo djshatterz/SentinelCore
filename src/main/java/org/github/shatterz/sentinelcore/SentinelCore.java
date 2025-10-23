@@ -1,6 +1,8 @@
 package org.github.shatterz.sentinelcore;
 
 import net.fabricmc.api.ModInitializer;
+import org.github.shatterz.sentinelcore.audit.AuditManager;
+import org.github.shatterz.sentinelcore.audit.SclogsCommands;
 import org.github.shatterz.sentinelcore.flags.FeatureFlagRegistry;
 import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
@@ -24,6 +26,19 @@ public final class SentinelCore implements ModInitializer {
 
     // config + flags (hot-reload is inside ConfigManager; FeatureFlagRegistry wires a callback)
     FeatureFlagRegistry.wireReload();
+
+    // Audit system setup and commands
+    AuditManager.applyConfig(org.github.shatterz.sentinelcore.config.ConfigManager.get());
+    org.github.shatterz.sentinelcore.config.ConfigManager.addReloadListener(
+        AuditManager::applyConfig);
+    SclogsCommands.register();
+
+    // Write a startup audit record so logs are always tail-able right after boot
+    try {
+      AuditManager.logSystem("startup", "server_boot", java.util.Map.of());
+    } catch (Throwable ignored) {
+      // non-fatal
+    }
 
     // category demo logs (will respect on/off later if you add level filtering)
     SentinelLogger.cat(SentinelCategories.AUDIT).info("Audit logging ready.");

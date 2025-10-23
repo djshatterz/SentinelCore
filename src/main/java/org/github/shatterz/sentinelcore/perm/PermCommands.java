@@ -14,6 +14,7 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import org.github.shatterz.sentinelcore.audit.AuditManager;
 import org.github.shatterz.sentinelcore.config.ConfigManager;
 
 public final class PermCommands {
@@ -56,6 +57,15 @@ public final class PermCommands {
                   if (ok) {
                     ctx.getSource()
                         .sendFeedback(() -> Text.literal("SentinelCore config reloaded."), true);
+                    // audit admin action
+                    if (ctx.getSource().getPlayer() != null) {
+                      var p = ctx.getSource().getPlayer();
+                      AuditManager.logAdminCommand(
+                          p.getUuid(),
+                          p.getName().getString(),
+                          "/sccore perm reload",
+                          java.util.Map.of("type", "config_reload"));
+                    }
                     return 1;
                   } else {
                     ctx.getSource()
@@ -89,6 +99,22 @@ public final class PermCommands {
                                                     + target.getName().getString()
                                                     + "."),
                                         true);
+                                    // audit admin action
+                                    if (src.getPlayer() != null) {
+                                      var p = src.getPlayer();
+                                      AuditManager.logAdminCommand(
+                                          p.getUuid(),
+                                          p.getName().getString(),
+                                          "/sccore perm role "
+                                              + target.getName().getString()
+                                              + " "
+                                              + role,
+                                          java.util.Map.of(
+                                              "type",
+                                              "role_assign",
+                                              "target",
+                                              target.getUuid().toString()));
+                                    }
                                     return 1;
                                   } else {
                                     src.sendError(

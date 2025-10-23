@@ -5,7 +5,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +23,8 @@ import org.slf4j.LoggerFactory;
 public final class ConfigManager {
   private static volatile Thread WATCHER_THREAD;
   private static volatile java.util.function.Consumer<CoreConfig> ON_RELOAD = null;
+  private static final java.util.List<java.util.function.Consumer<CoreConfig>> LISTENERS =
+      new java.util.concurrent.CopyOnWriteArrayList<>();
   private static final Logger LOG = LoggerFactory.getLogger("SentinelCore/Config");
   private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory());
   private static final ObjectMapper JSON = new ObjectMapper();
@@ -54,7 +62,7 @@ public final class ConfigManager {
       }
       CURRENT = load();
       LOG.info("Loaded config: {} featureFlags={}", fileInUse(), CURRENT.featureFlags.keySet());
-      ON_RELOAD = onReload; // <-- store callback
+      ON_RELOAD = onReload; // <-- store legacy single callback
       startWatcher(onReload);
     } catch (IOException e) {
       LOG.error("Failed to init config, using defaults", e);
@@ -67,13 +75,7 @@ public final class ConfigManager {
       CoreConfig newCfg = load();
       CURRENT = newCfg;
       LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
-      if (ON_RELOAD != null) {
-        try {
-          ON_RELOAD.accept(newCfg);
-        } catch (Exception cb) {
-          LOG.error("Reload callback failed", cb);
-        }
-      }
+      notifyListeners(newCfg);
       return true;
     } catch (Exception ex) {
       LOG.error("Manual reload failed", ex);
@@ -94,6 +96,28 @@ public final class ConfigManager {
         return JSON.readValue(r, CoreConfig.class);
       } else {
         return YAML.readValue(r, CoreConfig.class);
+      }
+    }
+  }
+
+  /** Add an additional reload listener without replacing the main callback. */
+  public static void addReloadListener(Consumer<CoreConfig> listener) {
+    if (listener != null) LISTENERS.add(listener);
+  }
+
+  private static void notifyListeners(CoreConfig cfg) {
+    if (ON_RELOAD != null) {
+      try {
+        ON_RELOAD.accept(cfg);
+      } catch (Exception cb) {
+        LOG.error("Reload callback failed", cb);
+      }
+    }
+    for (Consumer<CoreConfig> l : LISTENERS) {
+      try {
+        l.accept(cfg);
+      } catch (Exception ex) {
+        LOG.error("Reload listener failed", ex);
       }
     }
   }
@@ -137,7 +161,7 @@ public final class ConfigManager {
                       CoreConfig newCfg = load();
                       CURRENT = newCfg;
                       LOG.info("Config reloaded from {}", fileInUse().toAbsolutePath());
-                      if (onReload != null) onReload.accept(newCfg);
+                      notifyListeners(newCfg);
                     } catch (Exception ex) {
                       LOG.error("Failed to reload config", ex);
                     }
