@@ -102,7 +102,10 @@ public final class SpawnProtectionManager {
 
     // Check world match
     String wid = sw.getRegistryKey().getValue().toString();
-    if (!wid.equals(WORLD_ID)) return false;
+    if (!wid.equals(WORLD_ID)) {
+      LOG.debug("World mismatch: {} != {}", wid, WORLD_ID);
+      return false;
+    }
 
     // Creative or admin bypass
     if (player.isCreative()) return false;
@@ -115,9 +118,17 @@ public final class SpawnProtectionManager {
       double dx = pos.getX() + 0.5 - CENTER.x;
       double dz = pos.getZ() + 0.5 - CENTER.z;
       double distSq = dx * dx + dz * dz;
-      if (distSq > CFG.radius * CFG.radius) return false;
+      double maxDistSq = CFG.radius * CFG.radius;
+      if (distSq > maxDistSq) {
+        LOG.debug("Outside radius: dist²={} > max²={}", distSq, maxDistSq);
+        return false;
+      }
       // Bottom Y check
-      if (pos.getY() < CFG.bottomY) return false;
+      if (pos.getY() < CFG.bottomY) {
+        LOG.debug("Below bottom Y: {} < {}", pos.getY(), CFG.bottomY);
+        return false;
+      }
+      LOG.debug("Protection active at {} for player {}", pos, player.getName().getString());
     }
     // Add sphere support if needed
 
