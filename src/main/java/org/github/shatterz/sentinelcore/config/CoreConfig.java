@@ -1,45 +1,57 @@
 package org.github.shatterz.sentinelcore.config;
 
-import java.security.Permissions;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class CoreConfig {
-    public Map<String, Boolean> featureFlags = new HashMap<>();
-    public Logging logging = new Logging();
-    public Permissions permissions = new Permissions();
+  /** Feature flags toggled at runtime (hot-reload via ConfigManager). */
+  public Map<String, Boolean> featureFlags = new HashMap<>();
 
-    public static class Permissions {
-        public String backend = "memory"; // future: "luckperms"
-        public String defaultRole = "default";
-        public Map<String, String> roles = new java.util.HashMap<>();
-        public Map<String, String> userRoles = new java.util.HashMap<>(); // UUID to role
-    }
+  /** Logging category switches (can be extended to levels later). */
+  public Logging logging = new Logging();
 
-    public static class Role {
-        public java.util.Set<String> allow = new java.util.HashSet<>();
-        public java.util.Set<String> deny = new java.util.HashSet<>();
-        public java.util.Set<String> inherit = new java.util.HashSet<>();
-    }
+  /** Permission configuration (backend + roles). */
+  public Permissions permissions = new Permissions();
 
-    public static class Logging {
-        // per-category on/off (you can extend to levels later)
-        public boolean audit = true;
-        public boolean perm = true;
-        public boolean move = true;
-        public boolean modmode = true;
-        public boolean spawn = true;
-    }
+  /** Default constructor populates nothing; use defaults() to create a prefilled config. */
+  public CoreConfig() {}
 
-    public static CoreConfig defaults() {
-        CoreConfig c = new CoreConfig();
-        c.featureFlags.put("exampleFlag", false);
+  public static class Logging {
+    public boolean audit = true;
+    public boolean perm = true;
+    public boolean move = true;
+    public boolean modmode = true;
+    public boolean spawn = true;
+  }
 
-        // default role allows nothing
-        Permissions p = c.permissions;
-        Role def = new Role();
-        p.roles.put("default", def);
-        p.defaultRole = "default";
-        return c;
-    }
+  /** Permissions schema stored in YAML/JSON config. */
+  public static class Permissions {
+    public String backend = "memory"; // future: "luckperms"
+    public String defaultRole = "default";
+    public Map<String, Role> roles = new HashMap<>(); // role name -> role definition
+    public Map<String, String> userRoles = new HashMap<>(); // uuid -> role name
+  }
+
+  /** A role with simple allow/deny sets and inheritance. */
+  public static class Role {
+    public Set<String> allow = new HashSet<>();
+    public Set<String> deny = new HashSet<>();
+    public Set<String> inherits = new HashSet<>();
+  }
+
+  /** Create a config with sensible defaults. */
+  public static CoreConfig defaults() {
+    CoreConfig c = new CoreConfig();
+    c.featureFlags.put("exampleFlag", false);
+
+    // default role exists but grants nothing
+    Permissions p = c.permissions;
+    Role def = new Role();
+    p.roles.put("default", def);
+    p.defaultRole = "default";
+
+    return c;
+  }
 }

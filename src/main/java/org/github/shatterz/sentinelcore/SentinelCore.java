@@ -1,11 +1,11 @@
 package org.github.shatterz.sentinelcore;
-import org.github.shatterz.sentinelcore.perm.PermCommands;
-import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
 
 import net.fabricmc.api.ModInitializer;
 import org.github.shatterz.sentinelcore.flags.FeatureFlagRegistry;
 import org.github.shatterz.sentinelcore.log.SentinelCategories;
 import org.github.shatterz.sentinelcore.log.SentinelLogger;
+import org.github.shatterz.sentinelcore.perm.PermCommands;
+import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
 import org.slf4j.Logger;
 
 public final class SentinelCore implements ModInitializer {

@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.*;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.io.BufferedWriter;
-import java.util.UUID;
-
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,42 +170,42 @@ public final class ConfigManager {
                 "SentinelCore-ConfigWatcher-Shutdown"));
   }
 
-    private static void saveCurrent() throws IOException {
-        Path file = fileInUse();
-        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
-        if (name.endsWith(".json")) {
-            try (OutputStream out = Files.newOutputStream(file)) {
-                JSON.writerWithDefaultPrettyPrinter().writeValue(out, CURRENT);
-            }
-        } else {
-            try (OutputStream out = Files.newOutputStream(file)) {
-                YAML.writerWithDefaultPrettyPrinter().writeValue(out, CURRENT);
-            }
-        }
+  private static void saveCurrent() throws IOException {
+    Path file = fileInUse();
+    String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+    if (name.endsWith(".json")) {
+      try (OutputStream out = Files.newOutputStream(file)) {
+        JSON.writerWithDefaultPrettyPrinter().writeValue(out, CURRENT);
+      }
+    } else {
+      try (OutputStream out = Files.newOutputStream(file)) {
+        YAML.writerWithDefaultPrettyPrinter().writeValue(out, CURRENT);
+      }
     }
+  }
 
-    public static synchronized boolean setUserRole(UUID uuid, String role) {
+  public static synchronized boolean setUserRole(UUID uuid, String role) {
+    try {
+      if (CURRENT.permissions == null) {
+        CURRENT.permissions = new CoreConfig.Permissions();
+      }
+      if (CURRENT.permissions.userRoles == null) {
+        CURRENT.permissions.userRoles = new java.util.HashMap<>();
+      }
+      CURRENT.permissions.userRoles.put(uuid.toString(), role);
+      saveCurrent(); // persist to file
+      LOG.info("Set role {} for {}", role, uuid);
+      if (ON_RELOAD != null) {
         try {
-            if (CURRENT.permissions == null) {
-                CURRENT.permissions = new CoreConfig.Permissions();
-            }
-            if (CURRENT.permissions.userRoles == null) {
-                CURRENT.permissions.userRoles = new java.util.HashMap<>();
-            }
-            CURRENT.permissions.userRoles.put(uuid.toString(), role);
-            saveCurrent(); // persist to file
-            LOG.info("Set role {} for {}", role, uuid);
-            if (ON_RELOAD != null) {
-                try { ON_RELOAD.accept(CURRENT); } catch (Exception cb) {
-                    LOG.error("Reload callback failed after role change", cb);
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            LOG.error("Failed to set role for {} to {}", uuid, role, e);
-            return false;
+          ON_RELOAD.accept(CURRENT);
+        } catch (Exception cb) {
+          LOG.error("Reload callback failed after role change", cb);
         }
+      }
+      return true;
+    } catch (Exception e) {
+      LOG.error("Failed to set role for {} to {}", uuid, role, e);
+      return false;
     }
-
-
+  }
 }
