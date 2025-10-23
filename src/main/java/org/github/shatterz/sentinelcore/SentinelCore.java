@@ -1,4 +1,5 @@
 package org.github.shatterz.sentinelcore;
+import org.github.shatterz.sentinelcore.perm.PermCommands;
 import org.github.shatterz.sentinelcore.perm.PermissionBootstrap;
 
 import net.fabricmc.api.ModInitializer;
@@ -15,6 +16,7 @@ public final class SentinelCore implements ModInitializer {
     Logger log = SentinelLogger.root();
     log.info("[SentinelCore] Initializing base systems...");
     PermissionBootstrap.init();
+    PermCommands.register();
 
     // config + flags (hot-reload is inside ConfigManager; FeatureFlagRegistry wires a callback)
     FeatureFlagRegistry.wireReload();
