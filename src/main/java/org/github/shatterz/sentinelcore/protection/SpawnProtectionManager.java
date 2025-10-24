@@ -2,6 +2,7 @@ package org.github.shatterz.sentinelcore.protection;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -152,6 +153,23 @@ public final class SpawnProtectionManager {
         });
 
     LOG.info("SpawnProtection event listeners registered.");
+
+    // Physics protections: mob spawn (explosions/pistons added once correct API is available)
+    // Remove mobs that load/spawn inside the zone
+    ServerEntityEvents.ENTITY_LOAD.register(
+        (entity, world) -> {
+          if (!CFG.enabled) return;
+          if (!CFG.physics.blockMobSpawn) return;
+          if (!(world instanceof ServerWorld sw)) return;
+          // Only act on MobEntity (hostile/passive). Avoid touching players/items/etc.
+          if (!(entity instanceof net.minecraft.entity.mob.MobEntity)) return;
+          BlockPos pos = entity.getBlockPos();
+          if (isInsideZone(sw, pos)) {
+            LOG.debug(
+                "Removing mob {} at {} due to spawn protection", entity.getType().toString(), pos);
+            entity.discard();
+          }
+        });
   }
 
   private static boolean isWhitelistedInteract(String blockId) {
@@ -242,5 +260,23 @@ public final class SpawnProtectionManager {
 
   public static String getWorldId() {
     return WORLD_ID;
+  }
+
+  // Mixin helpers for physics protection
+  public static boolean shouldProtectExplosion(World world, BlockPos pos) {
+    if (!CFG.enabled || !CFG.physics.blockExplosions) return false;
+    return isInsideZone(world, pos);
+  }
+
+  public static boolean shouldProtectPiston(
+      World world, BlockPos pistonPos, net.minecraft.util.math.Direction direction) {
+    if (!CFG.enabled || !CFG.physics.blockPistons) return false;
+    // Cancel if piston base or first pushed block is inside zone
+    return isInsideZone(world, pistonPos) || isInsideZone(world, pistonPos.offset(direction));
+  }
+
+  public static boolean shouldProtectEnderman(World world, BlockPos pos) {
+    if (!CFG.enabled || !CFG.physics.blockEndermen) return false;
+    return isInsideZone(world, pos);
   }
 }

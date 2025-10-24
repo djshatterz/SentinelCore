@@ -3,7 +3,11 @@
   "minVersion": "0.8",
   "package": "org.github.shatterz.sentinelcore.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "EndermanEntityMixin",
+    "ExplosionMixin",
+    "PistonHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
