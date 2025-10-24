@@ -4,9 +4,7 @@
   "package": "org.github.shatterz.sentinelcore.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "EndermanEntityMixin",
-    "ExplosionMixin",
-    "PistonHandlerMixin"
+    "EndermanEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
